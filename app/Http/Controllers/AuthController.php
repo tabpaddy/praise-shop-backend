@@ -52,6 +52,7 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token' => $token,
             'user' => $user,
+            'user_ipAddress' => $user->ip_address,
         ]);
     }
 
