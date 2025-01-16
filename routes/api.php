@@ -15,5 +15,5 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::post('/subscribe', [SubscribeController::class, "subscribe"]);
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendRestLink']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
