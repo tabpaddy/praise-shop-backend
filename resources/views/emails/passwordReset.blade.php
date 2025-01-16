@@ -24,7 +24,7 @@
 <body>
     <div style="max-width: 600px; margin: 20px auto; font-family: Arial, sans-serif; line-height: 1.5;">
         <h2 style="text-align: center;">Password Reset Request</h2>
-        <p>Hello, {{$data['name']}}</p>
+        <p>Hello, {{$name}}</p>
         <p>You requested a password reset for your account. Click the button below to reset your password:</p>
         <div style="text-align: center; margin: 20px 0;">
             <a href="{{ $resetUrl }}" class="btn">Reset Password</a>
