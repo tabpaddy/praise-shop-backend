@@ -28,17 +28,27 @@ class ForgotPasswordController extends Controller
         $token = Str::random(60);
 
 
-        // store the token in password_reset_table
-        DB::table('password_reset_tokens')->updateOrInsert([
-            'email' => $request->email,
-            'token' => $token,
-            'created_at' => Carbon::now()
-        ]);
+        // Delete expired tokens and ensure unique email
+        DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->orWhere('created_at', '<', Carbon::now()->subMinutes(60))
+            ->delete();
 
-        // dispatch a job to send the mail
-        SendResetPasswordMail::dispatch($request->email, $token, $user->name);
+        // Store the token in password_reset_tokens table
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'token' => $token,
+                'created_at' => Carbon::now()
+            ]
+        );
 
-        return response()->json(['message' => 'Reset password link sent to your email']);
+
+        // Dispatch the mail job
+    $resetUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/reset-password?token=' . $token . '&email=' . $request->email;
+    SendResetPasswordMail::dispatch($request->email, $resetUrl, $user->name);
+
+        return response()->json(['message' => 'Reset password link sent to your email', 'token' => $token, 'email' => $user->email], 200);
     }
 
     public function resetPassword(Request $request)
