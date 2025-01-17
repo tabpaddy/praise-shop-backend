@@ -44,11 +44,15 @@ class ForgotPasswordController extends Controller
         );
 
 
-        // Dispatch the mail job
-    $resetUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/reset-password?token=' . $token . '&email=' . $request->email;
-    SendResetPasswordMail::dispatch($request->email, $resetUrl, $user->name);
+        // Generate the reset link
+        $resetUrl = config('app.frontend_url', 'http://localhost:5173')
+            . '/reset-password?token=' . $token
+            . '&email=' . urlencode($request->email);
 
-        return response()->json(['message' => 'Reset password link sent to your email', 'token' => $token, 'email' => $user->email], 200);
+        // Dispatch the mail job
+        SendResetPasswordMail::dispatch($request->email, $resetUrl, $user->name);
+
+        return response()->json(['message' => 'Reset password link sent to your email'], 200);
     }
 
     public function resetPassword(Request $request)
