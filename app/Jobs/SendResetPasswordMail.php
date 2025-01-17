@@ -26,9 +26,10 @@ class SendResetPasswordMail implements ShouldQueue
 
     public function handle()
     {
-        $resetUrl = url('/reset-password?token=' . $this->token . '&email=' . $this->email);
-
-        Mail::send('emails.passwordReset', ['resetUrl' => $resetUrl, 'name' => $this->name], function ($message) {
+        Mail::send('emails.passwordReset', [
+            'resetUrl' => $this->token,
+            'name' => $this->name
+        ], function ($message) {
             $message->to($this->email)
                 ->subject('Password Reset Request');
         });
