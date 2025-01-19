@@ -52,15 +52,21 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token' => $token,
             'user' => $user,
-            'user_ipAddress' => $user->ip_address,
+            'expiresIn' => now()->addMinute(30),
         ]);
     }
 
     // User logout
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        $request->validate(['userEmail' => 'required|email']);
 
-        return response()->json(['message' => 'Logged out successfully']);
+        $user = User::where('email', $request->userEmail)->first();
+        if ($user) {
+            $user->tokens()->delete();
+            return response()->json(['message' => 'Logged out successfully']);
+        }
+
+        return response()->json(['error' => 'User not found'], 404);
     }
 }
