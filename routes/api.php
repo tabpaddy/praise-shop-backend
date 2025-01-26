@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SubscribeController;
 use App\Http\Controllers\Admin\AuthAdminController;
+use App\Http\Controllers\ManageUserController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -21,7 +22,10 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'
 
 
 Route::post('/admin/login', [AuthAdminController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/logout', [AuthAdminController::class, 'logout']);
     Route::post('/admin/create-subadmin', [AuthAdminController::class, 'createSubAdmin']);
+    Route::post('/add-user', [ManageUserController::class, 'addUser']);
+    Route::get('/admin/manage-user', [ManageUserController::class, 'user']);
+    Route::delete('/admin/manage-user/{delete}', [ManageUserController::class, 'deleteUser']);
 });
