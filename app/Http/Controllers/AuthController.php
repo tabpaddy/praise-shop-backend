@@ -17,14 +17,12 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'ip_address' => 'required|ip',
         ]);
 
         $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
             'password' => bcrypt($validatedData['password']),
-            'ip_address' => $request->ip(), // Capture IP address
         ]);
 
         return response()->json(['message' => 'User registered successfully!', 'user' => $user]);
@@ -36,6 +34,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'ip_address' => 'required|ip',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -46,13 +45,19 @@ class AuthController extends Controller
             ]);
         }
 
+        // assigning the ipAddress
+        $user->ip_address = $request->ip_address;
+        $user->save();
+
+
         $token = $user->createToken('authToken')->plainTextToken;
+
 
         return response()->json([
             'message' => 'Login successful',
             'token' => $token,
             'user' => $user,
-            'expiresIn' => now()->addMinute(30),
+            'expiresIn' => now()->addMinutes(30),
         ]);
     }
 
@@ -63,6 +68,8 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->userEmail)->first();
         if ($user) {
+            $user->ip_address = null;
+            $user->save();
             $user->tokens()->delete();
             return response()->json(['message' => 'Logged out successfully']);
         }
