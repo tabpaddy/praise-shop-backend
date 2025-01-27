@@ -48,41 +48,48 @@ class ManageUserController extends Controller
 
     // get all users
     public function user()
-{
-    $admin = auth('admin')->user(); // Authenticate admin
+    {
+        $admin = auth('admin')->user(); // Authenticate admin
 
-    // Check if admin is authorized
-    if (!$admin || !$admin->isAdminOrSubAdmin()) {
-        \Log::error('Unauthorized admin access.', ['admin' => $admin]);
+        // Check if admin is authorized
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            \Log::error('Unauthorized admin access.', ['admin' => $admin]);
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        // Fetch all users
+        $users = User::all();
+
+        return response()->json(['users' => $users]); // Note: Changed key to 'users'
+    }
+
+
+    // delete a user
+public function deleteUser(Request $request, $userId)
+{
+    // Log the incoming request and authentication details
+    Log::debug('Incoming request token:', ['Authorization' => $request->header('Authorization')]);
+
+    $admin = auth('admin')->user();
+    Log::debug('Authenticated admin:', ['admin' => $admin]);
+
+    // Check if the authenticated admin is authorized
+    if (!$admin || !$admin->isAdmin()) {
+        Log::debug('Unauthorized admin access.', ['admin' => $admin]);
         return response()->json(['message' => 'Unauthorized.'], 403);
     }
 
-    // Fetch all users
-    $users = User::all();
+    // Find the user by ID
+    $user = User::find($userId);
 
-    return response()->json(['users' => $users]); // Note: Changed key to 'users'
+    if ($user) {
+        $user->delete();
+        Log::info('User deleted successfully.', ['user_id' => $userId]);
+        return response()->json(['message' => 'User deleted successfully'], 200);
+    } else {
+        Log::error('User not found.', ['user_id' => $userId]);
+        return response()->json(['error' => 'User not found'], 404);
+    }
 }
 
-
-    //delete a user
-    public function deleteUser(Request $request)
-    {
-        // Ensure the request is from an authenticated admin (not sub-admin)
-        if (!auth('admin')->check() || !auth('admin')->user()->isAdmin()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $request->validate([
-            'id' => 'required|exists:users,id',
-        ]);
-
-        $user = User::find($request->id);
-
-        if ($user) {
-            $user->delete();
-            return response()->json(['message' => 'User deleted successfully']);
-        } else {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-    }
 }

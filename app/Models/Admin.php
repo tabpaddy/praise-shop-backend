@@ -19,20 +19,26 @@ class Admin extends Authenticatable
 
     public function isAdmin()
     {
+        // Debug the subAdmin value and type
+        Log::debug('Checking isAdmin', [
+            'subAdmin' => $this->subAdmin,
+            'subAdminType' => gettype($this->subAdmin),
+        ]);
+
         // Assuming you have a column `role` in your `admins` table to identify admins
-        return $this->subAdmin === false;
+        return $this->subAdmin === 0;
     }
 
     // In App\Models\Admin.php
     public function isAdminOrSubAdmin()
-{
-    // Debug the subAdmin value and type
-    Log::debug('Checking isAdminOrSubAdmin', [
-        'subAdmin' => $this->subAdmin,
-        'subAdminType' => gettype($this->subAdmin),
-    ]);
+    {
+        // Debug the subAdmin value and type
+        Log::debug('Checking isAdminOrSubAdmin', [
+            'subAdmin' => $this->subAdmin,
+            'subAdminType' => gettype($this->subAdmin),
+        ]);
 
-    // Handle integer values (0 for full admin, 1 for sub-admin)
-    return $this->subAdmin == 0 || $this->subAdmin == 1;
-}
+        // Handle integer values (0 for full admin, 1 for sub-admin)
+        return $this->subAdmin == 0 || $this->subAdmin == 1;
+    }
 }
