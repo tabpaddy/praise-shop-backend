@@ -47,11 +47,22 @@ class ManageUserController extends Controller
 
 
     // get all users
-    public function users()
-    {
-        $user = User::all();
-        return response()->json($user);
+    public function user()
+{
+    $admin = auth('admin')->user(); // Authenticate admin
+
+    // Check if admin is authorized
+    if (!$admin || !$admin->isAdminOrSubAdmin()) {
+        \Log::error('Unauthorized admin access.', ['admin' => $admin]);
+        return response()->json(['message' => 'Unauthorized.'], 403);
     }
+
+    // Fetch all users
+    $users = User::all();
+
+    return response()->json(['users' => $users]); // Note: Changed key to 'users'
+}
+
 
     //delete a user
     public function deleteUser(Request $request)
