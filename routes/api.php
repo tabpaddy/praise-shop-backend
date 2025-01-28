@@ -25,6 +25,8 @@ Route::post('/admin/login', [AuthAdminController::class, 'login']);
 Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/logout', [AuthAdminController::class, 'logout']);
     Route::post('/admin/create-subadmin', [AuthAdminController::class, 'createSubAdmin']);
+    Route::get('/admin/sub-admin', [AuthAdminController::class, 'subAdmin']);
+    Route::delete('/admin/manage-admin/{delete}', [AuthAdminController::class, 'deleteSubAdmin']);
     Route::post('/add-user', [ManageUserController::class, 'addUser']);
     Route::get('/admin/manage-user', [ManageUserController::class, 'user']);
     Route::delete('/admin/manage-user/{delete}', [ManageUserController::class, 'deleteUser']);

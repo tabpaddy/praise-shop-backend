@@ -43,6 +43,15 @@ class AuthAdminController extends Controller
     // Create Sub-Admin
     public function createSubAdmin(Request $request)
     {
+        $admin = auth('admin')->user();
+        if (!$admin) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        if (!$admin->isAdmin()) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
         // Ensure only Super Admin can create Sub-Admins
         if ($request->user()->subAdmin) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -63,5 +72,39 @@ class AuthAdminController extends Controller
 
         return response()->json(['message' => 'Sub-admin created successfully', 'subAdmin' => $subAdmin]);
     }
-}
 
+    // get all SubAdmin
+    public function subAdmin()
+    {
+        $admin = auth('admin')->user(); // authenticated admin
+
+        // check if admin is authorized
+        if (!$admin || !$admin->isAdmin()) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
+        // fetch all subAdmin
+        $subAdmin = Admin::where('subAdmin' === 1)::all();
+
+        return response()->json(['subAdmin' => $subAdmin]);
+    }
+
+    public function deleteSubAdmin($userId)
+    {
+        $admin = auth('admin')->user();
+
+        // check if the authenticated admin is authorized
+        if (!$admin || $admin->isAdmin()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $subAdmin = Admin::find($userId);
+
+        if ($subAdmin) {
+            $subAdmin->delete();
+            return response()->json(['message' => 'SubAdmin deleted successfully'], 200);
+        } else {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+    }
+}
