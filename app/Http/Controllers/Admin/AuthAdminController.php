@@ -37,7 +37,7 @@ class AuthAdminController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json(['message' => 'Logged out successfully'], 200);
     }
 
     // Create Sub-Admin
@@ -61,6 +61,12 @@ class AuthAdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admins',
             'password' => 'required|string|min:8',
+        ], [
+            'name.required' => 'Name is required.',
+            'email.required' => 'Email is required.',
+            'email.unique' => 'This email is already in use.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 8 characters long.',
         ]);
 
         $subAdmin = Admin::create([
@@ -70,7 +76,7 @@ class AuthAdminController extends Controller
             'subAdmin' => true, // Sub-admin status
         ]);
 
-        return response()->json(['message' => 'Sub-admin created successfully', 'subAdmin' => $subAdmin]);
+        return response()->json(['message' => 'Sub-admin created successfully', 'subAdmin' => $subAdmin], 200);
     }
 
     // get all SubAdmin
@@ -83,8 +89,8 @@ class AuthAdminController extends Controller
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
 
-        // fetch all subAdmin
-        $subAdmin = Admin::where('subAdmin' === 1)::all();
+        // fetch all subAdmin        
+        $subAdmin = Admin::where('subAdmin', 1)->get();
 
         return response()->json(['subAdmin' => $subAdmin]);
     }
