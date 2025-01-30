@@ -16,13 +16,13 @@ class ManageUserController extends Controller
         // Debug the authenticated user
         $admin = auth('admin')->user();
         if (!$admin) {
-            \Log::error('Unauthenticated admin.');
+            // \Log::error('Unauthenticated admin.');
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
         // Debug the isAdminOrSubAdmin method
         if (!$admin->isAdminOrSubAdmin()) {
-            \Log::error('Unauthorized admin.', ['admin' => $admin]);
+            // \Log::error('Unauthorized admin.', ['admin' => $admin]);
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
@@ -40,7 +40,7 @@ class ManageUserController extends Controller
             'password' => bcrypt($validatedData['password']),
         ]);
 
-        \Log::info('User created successfully.', ['user' => $user]);
+        // \Log::info('User created successfully.', ['user' => $user]);
 
         return response()->json(['message' => 'User created successfully', 'user' => $user], 200);
     }
@@ -53,7 +53,7 @@ class ManageUserController extends Controller
 
         // Check if admin is authorized
         if (!$admin || !$admin->isAdminOrSubAdmin()) {
-            \Log::error('Unauthorized admin access.', ['admin' => $admin]);
+            // \Log::error('Unauthorized admin access.', ['admin' => $admin]);
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
@@ -68,14 +68,14 @@ class ManageUserController extends Controller
 public function deleteUser(Request $request, $userId)
 {
     // Log the incoming request and authentication details
-    Log::debug('Incoming request token:', ['Authorization' => $request->header('Authorization')]);
+    // Log::debug('Incoming request token:', ['Authorization' => $request->header('Authorization')]);
 
     $admin = auth('admin')->user();
-    Log::debug('Authenticated admin:', ['admin' => $admin]);
+    // Log::debug('Authenticated admin:', ['admin' => $admin]);
 
     // Check if the authenticated admin is authorized
     if (!$admin || !$admin->isAdmin()) {
-        Log::debug('Unauthorized admin access.', ['admin' => $admin]);
+        // Log::debug('Unauthorized admin access.', ['admin' => $admin]);
         return response()->json(['message' => 'Unauthorized.'], 403);
     }
 
@@ -84,10 +84,10 @@ public function deleteUser(Request $request, $userId)
 
     if ($user) {
         $user->delete();
-        Log::info('User deleted successfully.', ['user_id' => $userId]);
+        // Log::info('User deleted successfully.', ['user_id' => $userId]);
         return response()->json(['message' => 'User deleted successfully'], 200);
     } else {
-        Log::error('User not found.', ['user_id' => $userId]);
+        // Log::error('User not found.', ['user_id' => $userId]);
         return response()->json(['error' => 'User not found'], 404);
     }
 }
