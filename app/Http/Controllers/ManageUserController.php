@@ -65,31 +65,30 @@ class ManageUserController extends Controller
 
 
     // delete a user
-public function deleteUser(Request $request, $userId)
-{
-    // Log the incoming request and authentication details
-    // Log::debug('Incoming request token:', ['Authorization' => $request->header('Authorization')]);
+    public function deleteUser(Request $request, $userId)
+    {
+        // Log the incoming request and authentication details
+        // Log::debug('Incoming request token:', ['Authorization' => $request->header('Authorization')]);
 
-    $admin = auth('admin')->user();
-    // Log::debug('Authenticated admin:', ['admin' => $admin]);
+        $admin = auth('admin')->user();
+        // Log::debug('Authenticated admin:', ['admin' => $admin]);
 
-    // Check if the authenticated admin is authorized
-    if (!$admin || !$admin->isAdmin()) {
-        // Log::debug('Unauthorized admin access.', ['admin' => $admin]);
-        return response()->json(['message' => 'Unauthorized.'], 403);
+        // Check if the authenticated admin is authorized
+        if (!$admin || !$admin->isAdmin()) {
+            // Log::debug('Unauthorized admin access.', ['admin' => $admin]);
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        // Find the user by ID
+        $user = User::find($userId);
+
+        if ($user) {
+            $user->delete();
+            // Log::info('User deleted successfully.', ['user_id' => $userId]);
+            return response()->json(['message' => 'User deleted successfully'], 200);
+        } else {
+            // Log::error('User not found.', ['user_id' => $userId]);
+            return response()->json(['error' => 'User not found'], 404);
+        }
     }
-
-    // Find the user by ID
-    $user = User::find($userId);
-
-    if ($user) {
-        $user->delete();
-        // Log::info('User deleted successfully.', ['user_id' => $userId]);
-        return response()->json(['message' => 'User deleted successfully'], 200);
-    } else {
-        // Log::error('User not found.', ['user_id' => $userId]);
-        return response()->json(['error' => 'User not found'], 404);
-    }
-}
-
 }

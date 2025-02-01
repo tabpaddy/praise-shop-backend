@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SubscribeController;
 use App\Http\Controllers\Admin\AuthAdminController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ManageUserController;
 
 Route::get('/user', function (Request $request) {
@@ -30,4 +31,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/add-user', [ManageUserController::class, 'addUser']);
     Route::get('/admin/manage-user', [ManageUserController::class, 'user']);
     Route::delete('/admin/manage-user/{delete}', [ManageUserController::class, 'deleteUser']);
+    Route::post('/admin/add-category', [CategoryController::class, 'addCategory']);
+    Route::get('/admin/manage-category', [CategoryController::class, 'getAllCategory']);
+    Route::delete('/admin/manage-category/{delete}', [CategoryController::class, 'deleteCategory']);
+    Route::put('/admin/edit-category/{edit}', [CategoryController::class, 'editCategory']);
 });
