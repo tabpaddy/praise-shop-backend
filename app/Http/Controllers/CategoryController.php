@@ -50,7 +50,13 @@ class CategoryController extends Controller
         // fetch all category
         $category = Category::all();
 
-        return response()->json(['categories' => $category]);
+        if ($category){
+            return response()->json(['categories' => $category]);
+        }else{
+            return response()->json(['message' => 'category not found'], 404);
+        }
+
+        
     }
 
     // delete a category
