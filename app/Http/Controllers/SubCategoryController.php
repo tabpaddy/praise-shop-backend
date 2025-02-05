@@ -29,7 +29,7 @@ class SubCategoryController extends Controller
 
         // create the category
         $sub_category = SubCategory::create([
-            'sub_category_title' => $validatedData['category_title'],
+            'sub_category_title' => $validatedData['sub_category_title'],
             'created_at' => Carbon::now(),
         ]);
 
@@ -50,7 +50,7 @@ class SubCategoryController extends Controller
         $sub_category = SubCategory::all();
 
         if ($sub_category) {
-            return response()->json(['categories' => $sub_category], 200);
+            return response()->json(['sub_categories' => $sub_category], 200);
         } else {
             return response()->json(['message' => 'subCategory not found'], 404);
         }
@@ -74,6 +74,33 @@ class SubCategoryController extends Controller
             return response()->json(['message' => $subCategory->sub_category_title . ' deleted successfully'], 200);
         } else {
             return response()->json(['error' => 'subCategory not found'], 404);
+        }
+    }
+
+    // edit category
+    public function editSubCategory(Request $request, $subCategoryId)
+    {
+        $admin = auth('admin')->user();
+
+        // admin or subadmin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => "Unauthorized."], 403);
+        }
+
+        // find the category by id
+        $subCategory = SubCategory::find($subCategoryId);
+
+        if ($subCategory) {
+            $request->validate([
+                'sub_category_title' => 'required|string|max:255|unique:sub_categories,sub_category_title,' . $subCategoryId
+            ]);
+
+            $subCategory->update([
+                'sub_category_title' => $request->sub_category_title,
+                'updated_at' => Carbon::now(),
+            ]);
+
+            return response()->json(['message' => 'SubCategory Updated.'], 200);
         }
     }
 }

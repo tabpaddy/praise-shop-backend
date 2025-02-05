@@ -50,13 +50,11 @@ class CategoryController extends Controller
         // fetch all category
         $category = Category::all();
 
-        if ($category){
+        if ($category) {
             return response()->json(['categories' => $category]);
-        }else{
+        } else {
             return response()->json(['message' => 'category not found'], 404);
         }
-
-        
     }
 
     // delete a category
@@ -95,20 +93,15 @@ class CategoryController extends Controller
 
         if ($category) {
             $request->validate([
-                'category_title' => 'required|string|max:255|unique:categories'
+                'category_title' => 'required|string|max:255|unique:categories,category_title,' . $categoryId
             ]);
 
-            // store the new category in the database
-            DB::table('categories')->updateOrInsert(
-                ['category' => $request->category_title],
-                [
-                    'updated_at' => Carbon::now()
-                ]
-            );
+            $category->update([
+                'category_title' => $request->category_title,
+                'updated_at' => Carbon::now(),
+            ]);
 
             return response()->json(['message' => 'Category Updated.'], 200);
-        }else{
-            return response()->json(['error' => 'Category not found.'], 404);
         }
     }
 }

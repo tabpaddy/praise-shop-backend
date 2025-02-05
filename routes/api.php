@@ -37,7 +37,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/admin/manage-category/{delete}', [CategoryController::class, 'deleteCategory']);
     Route::put('/admin/edit-category/{edit}', [CategoryController::class, 'editCategory']);
     Route::post('/admin/add-sub-category', [SubCategoryController::class, 'addSubCategory']);
-    Route::get('/admin/manage-sub-category', [SubCategoryController::class, 'getAllCategory']);
+    Route::get('/admin/manage-sub-category', [SubCategoryController::class, 'getAllSubCategory']);
     Route::delete('admin/manage-sub-category/{delete}', [SubCategoryController::class, 'deleteSubCategory']);
     Route::put('/admin/edit-sub-category/{edit}', [SubCategoryController::class, 'editSubCategory']);
 });
