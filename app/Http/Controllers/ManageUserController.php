@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 
@@ -58,7 +59,9 @@ class ManageUserController extends Controller
         }
 
         // Fetch all users
-        $users = User::all();
+        $users = Cache::remember('user', 60, function () {
+            return User::all();
+        });
 
         return response()->json(['users' => $users]); // Note: Changed key to 'users'
     }

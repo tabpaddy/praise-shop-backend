@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Admin;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class AuthAdminController extends Controller
@@ -90,8 +91,10 @@ class AuthAdminController extends Controller
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
 
-        // fetch all subAdmin        
-        $subAdmin = Admin::where('subAdmin', 1)->get();
+        // fetch all subAdmin
+        $subAdmin = Cache::remember('admin', 60 , function() {
+            return Admin::where('subAdmin', 1)->get();
+        });
 
         return response()->json(['subAdmin' => $subAdmin]);
     }
@@ -99,7 +102,7 @@ class AuthAdminController extends Controller
     public function deleteSubAdmin($userId)
     {
         $admin = auth('admin')->user();
-     
+
         // check if the authenticated admin is authorized
         if (!$admin || !$admin->isAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);

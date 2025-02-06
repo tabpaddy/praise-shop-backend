@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SubCategory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SubCategoryController extends Controller
 {
@@ -47,7 +48,9 @@ class SubCategoryController extends Controller
         }
 
         // fetch all category
-        $sub_category = SubCategory::all();
+        $sub_category = Cache::remember('sub_categories', 60, function () {
+            return SubCategory::all();
+        });
 
         if ($sub_category) {
             return response()->json(['sub_categories' => $sub_category], 200);
@@ -57,7 +60,7 @@ class SubCategoryController extends Controller
     }
 
     // delete a category
-    public function deleteCategory($subCategoryId)
+    public function deleteSubCategory($subCategoryId)
     {
         $admin = auth('admin')->user();
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
@@ -37,7 +38,7 @@ class CategoryController extends Controller
         return response()->json(['message' => $category[0] . ' created successfully', 200]);
     }
 
-    // get all category 
+    // get all category
     public function getAllCategory()
     {
         $admin = auth('admin')->user();
@@ -48,7 +49,9 @@ class CategoryController extends Controller
         }
 
         // fetch all category
-        $category = Category::all();
+        $category = Cache::remember('categories', 60, function (){
+            return Category::all();
+        });
 
         if ($category) {
             return response()->json(['categories' => $category]);
