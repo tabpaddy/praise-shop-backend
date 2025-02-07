@@ -34,7 +34,9 @@ class SubCategoryController extends Controller
             'created_at' => Carbon::now(),
         ]);
 
-        return response()->json(['message' => $sub_category[0] . ' created successfully', 200]);
+        Cache::forget('sub_categories');
+
+        return response()->json(['message' => $sub_category->sub_category_title . ' created successfully', 200]);
     }
 
     // get all category
@@ -74,6 +76,7 @@ class SubCategoryController extends Controller
 
         if ($subCategory) {
             $subCategory->delete();
+            Cache::forget('sub_categories');
             return response()->json(['message' => $subCategory->sub_category_title . ' deleted successfully'], 200);
         } else {
             return response()->json(['error' => 'subCategory not found'], 404);
@@ -102,6 +105,8 @@ class SubCategoryController extends Controller
                 'sub_category_title' => $request->sub_category_title,
                 'updated_at' => Carbon::now(),
             ]);
+
+            Cache::forget('sub_categories');
 
             return response()->json(['message' => 'SubCategory Updated.'], 200);
         }

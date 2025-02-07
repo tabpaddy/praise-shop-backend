@@ -78,6 +78,8 @@ class AuthAdminController extends Controller
             'subAdmin' => true, // Sub-admin status
         ]);
 
+        Cache::forget('admin');
+
         return response()->json(['message' => 'Sub-admin created successfully', 'subAdmin' => $subAdmin], 200);
     }
 
@@ -92,7 +94,7 @@ class AuthAdminController extends Controller
         }
 
         // fetch all subAdmin
-        $subAdmin = Cache::remember('admin', 60 , function() {
+        $subAdmin = Cache::remember('admin', 60, function () {
             return Admin::where('subAdmin', 1)->get();
         });
 
@@ -112,6 +114,7 @@ class AuthAdminController extends Controller
 
         if ($subAdmin) {
             $subAdmin->delete();
+            Cache::forget('admin');
             return response()->json(['message' => 'SubAdmin deleted successfully'], 200);
         } else {
             return response()->json(['error' => 'User not found'], 404);

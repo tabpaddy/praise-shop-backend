@@ -41,6 +41,8 @@ class ManageUserController extends Controller
             'password' => bcrypt($validatedData['password']),
         ]);
 
+        Cache::forget('users');
+
         // \Log::info('User created successfully.', ['user' => $user]);
 
         return response()->json(['message' => 'User created successfully', 'user' => $user], 200);
@@ -59,7 +61,7 @@ class ManageUserController extends Controller
         }
 
         // Fetch all users
-        $users = Cache::remember('user', 60, function () {
+        $users = Cache::remember('users', 60, function () {
             return User::all();
         });
 
@@ -87,6 +89,7 @@ class ManageUserController extends Controller
 
         if ($user) {
             $user->delete();
+            Cache::forget('users');
             // Log::info('User deleted successfully.', ['user_id' => $userId]);
             return response()->json(['message' => 'User deleted successfully'], 200);
         } else {

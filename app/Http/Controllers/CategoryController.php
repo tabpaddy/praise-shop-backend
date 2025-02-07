@@ -35,6 +35,8 @@ class CategoryController extends Controller
             'created_at' => Carbon::now(),
         ]);
 
+        Cache::forget('categories');
+
         return response()->json(['message' => $category[0] . ' created successfully', 200]);
     }
 
@@ -75,6 +77,7 @@ class CategoryController extends Controller
 
         if ($category) {
             $category->delete();
+            Cache::forget('categories');
             return response()->json(['message' => 'Category deleted successfully'], 200);
         } else {
             return response()->json(['error' => 'Category not found'], 404);
@@ -103,6 +106,8 @@ class CategoryController extends Controller
                 'category_title' => $request->category_title,
                 'updated_at' => Carbon::now(),
             ]);
+
+            Cache::forget('categories');
 
             return response()->json(['message' => 'Category Updated.'], 200);
         }
