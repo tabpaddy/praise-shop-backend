@@ -37,7 +37,7 @@ class CategoryController extends Controller
 
         Cache::forget('categories');
 
-        return response()->json(['message' => $category[0] . ' created successfully', 200]);
+        return response()->json(['message' => $category->category_title . ' created successfully', 200]);
     }
 
     // get all category

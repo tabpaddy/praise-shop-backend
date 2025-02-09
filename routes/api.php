@@ -8,6 +8,7 @@ use App\Http\Controllers\SubscribeController;
 use App\Http\Controllers\Admin\AuthAdminController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ManageUserController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
 
 Route::get('/user', function (Request $request) {
@@ -40,4 +41,6 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/manage-sub-category', [SubCategoryController::class, 'getAllSubCategory']);
     Route::delete('admin/manage-sub-category/{delete}', [SubCategoryController::class, 'deleteSubCategory']);
     Route::put('/admin/edit-sub-category/{edit}', [SubCategoryController::class, 'editSubCategory']);
+    Route::post('/admin/add-product', [ProductController::class, 'addProduct']);
+    Route::get('/admin/manage-product', [ProductController::class, 'getAllProduct']);
 });
