@@ -33,4 +33,14 @@ class Product extends Model
         'price' => 'decimal:2',
     ];
 
+    // In Product.php
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function subCategory()
+    {
+        return $this->belongsTo(SubCategory::class);
+    }
 }

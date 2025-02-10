@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
+use App\Models\SubCategory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +24,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255|min:5|unique:products',
             'description' => 'required|string|min:10',
             'keyword' => 'required|string|min:10|max:255',
-            'price' => 'required|numeric|min:10|max:255',
+            'price' => 'required|numeric|min:10',
             'image1' => 'required|image|max:10240',
             'image2' => 'required|image|max:10240',
             'image3' => 'required|image|max:10240',
@@ -31,6 +33,7 @@ class ProductController extends Controller
             'category' => 'required|exists:categories,id',
             'subCategory' => 'required|exists:sub_categories,id',
             'sizes' => 'required|array',
+            'sizes.*' => 'string|in:S,M,L,XL,XXL', // Add array validation
             'bestseller' => 'required|boolean',
         ]);
 
@@ -74,12 +77,12 @@ class ProductController extends Controller
         }
 
         // fetch all category
-        $product = Cache::remember('product', 60, function () {
-            return Product::all();
+        $products = Cache::remember('products', 60, function () {
+            return Product::with(['category', 'subCategory'])->get();
         });
 
-        if ($product){
-            return response()->json(['product' => $product], 200);
+        if ($products){
+            return response()->json(['product' => $products], 200);
         } else {
             return response()->json(['message' => 'Product not found'], 404);
         }
