@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use PhpParser\Node\Stmt\TryCatch;
 
 class ProductController extends Controller
 {
@@ -104,6 +105,46 @@ class ProductController extends Controller
         }
     }
 
+    // get single product
+    public function getSingleProduct($id)
+    {
+        $admin = auth('admin')->user();
+
+        // admin or subadmin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => "Unauthorized."], 403);
+        }
+
+        // find product
+        $product = Product::with(['category', 'subCategory'])
+        ->find($id);
+
+        Cache::forget('products');
+
+        if(!$product){
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+
+        // Map over products to include full image URLs
+        $product->transform(function ($product) {
+            $product->image1_url = asset(Storage::url($product->image1));
+            $product->image2_url = asset(Storage::url($product->image2));
+            $product->image3_url = asset(Storage::url($product->image3));
+            $product->image4_url = asset(Storage::url($product->image4));
+            $product->image5_url = asset(Storage::url($product->image5));
+            // Decode sizes from JSON to an array if needed.
+            $product->sizes = json_decode($product->sizes);
+            return $product;
+        });
+
+        if ($product) {
+            return response()->json(['product' => $product], 200);
+        } else {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+    }
+
     // product delete
     public function deleteProduct($productId)
     {
@@ -117,17 +158,26 @@ class ProductController extends Controller
         // find the product by id
         $product = Product::find($productId);
 
-        if ($product) {
-            File::delete(storage_path('app/public/products' . $product->image1));
-            File::delete(storage_path('app/public/products' . $product->image2));
-            File::delete(storage_path('app/public/products' . $product->image3));
-            File::delete(storage_path('app/public/products' . $product->image4));
-            File::delete(storage_path('app/public/products' . $product->image5));
+        if(!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+        try {
+            //code...
+            File::delete(storage_path('app/public/' . $product->image1));
+            File::delete(storage_path('app/public/' . $product->image2));
+            File::delete(storage_path('app/public/' . $product->image3));
+            File::delete(storage_path('app/public/' . $product->image4));
+            File::delete(storage_path('app/public/' . $product->image5));
+
             $product->delete();
             Cache::forget('products');
+
             return response()->json(['message' => $product->name . ' deleted successfully']);
-        } else {
-            return response()->json(['error' => 'subCategory not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to delete product: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

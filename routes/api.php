@@ -43,5 +43,6 @@ Route::middleware('auth:admin')->group(function () {
     Route::put('/admin/edit-sub-category/{edit}', [SubCategoryController::class, 'editSubCategory']);
     Route::post('/admin/add-product', [ProductController::class, 'addProduct']);
     Route::get('/admin/manage-product', [ProductController::class, 'getAllProduct']);
-    Route::delete('/admin/manage-product', [ProductController::class, 'deleteProduct']);
+    Route::delete('/admin/manage-product/{delete}', [ProductController::class, 'deleteProduct']);
+    Route::get('/admin/manage-product/{id}', [ProductController::class, 'getSingleProduct']);
 });
