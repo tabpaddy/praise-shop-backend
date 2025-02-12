@@ -108,41 +108,36 @@ class ProductController extends Controller
     // get single product
     public function getSingleProduct($id)
     {
+        // Authenticate admin
         $admin = auth('admin')->user();
 
-        // admin or subadmin
         if (!$admin || !$admin->isAdminOrSubAdmin()) {
             return response()->json(['message' => "Unauthorized."], 403);
         }
 
-        // find product
-        $product = Product::with(['category', 'subCategory'])
-        ->find($id);
+        // Find the product with its category and sub-category relationships
+        $product = Product::with(['category', 'subCategory'])->find($id);
 
-        Cache::forget('products');
-
-        if(!$product){
+        // Check if product exists
+        if (!$product) {
             return response()->json(['error' => 'Product not found'], 404);
         }
 
+        // Map image paths to full URLs using the Storage facade and asset helper
+        $product->image1_url = asset(Storage::url($product->image1));
+        $product->image2_url = asset(Storage::url($product->image2));
+        $product->image3_url = asset(Storage::url($product->image3));
+        $product->image4_url = asset(Storage::url($product->image4));
+        $product->image5_url = asset(Storage::url($product->image5));
 
-        // Map over products to include full image URLs
-        $product->transform(function ($product) {
-            $product->image1_url = asset(Storage::url($product->image1));
-            $product->image2_url = asset(Storage::url($product->image2));
-            $product->image3_url = asset(Storage::url($product->image3));
-            $product->image4_url = asset(Storage::url($product->image4));
-            $product->image5_url = asset(Storage::url($product->image5));
-            // Decode sizes from JSON to an array if needed.
-            $product->sizes = json_decode($product->sizes);
-            return $product;
-        });
+        // Decode sizes (stored as JSON in the database) into an array
+        $product->sizes = json_decode($product->sizes);
 
-        if ($product) {
-            return response()->json(['product' => $product], 200);
-        } else {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
+        // Clear the cache for products if needed
+        Cache::forget('products');
+
+        // Return the product in a JSON response
+        return response()->json(['product' => $product], 200);
     }
 
     // product delete
@@ -179,5 +174,87 @@ class ProductController extends Controller
                 'error' => 'Failed to delete product: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // Update product
+    public function updateProduct(Request $request, $id)
+    {
+        // Authenticated admin check
+        $admin = auth('admin')->user();
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        // Find the product or fail with 404
+        $product = Product::findOrFail($id);
+
+        // Validate the request data. Note the unique rule excludes the current product.
+        $validationData = $request->validate([
+            'name' => 'required|string|max:255|min:5|unique:products,name,' . $product->id,
+            'description' => 'required|string|min:10',
+            'keyword' => 'required|string|min:10|max:255',
+            'price' => 'required|numeric|min:10',
+            'category' => 'required|exists:categories,id',
+            'subCategory' => 'required|exists:sub_categories,id',
+            'sizes' => 'required|array',
+            'sizes.*' => 'string|in:S,M,L,XL,XXL',
+            'bestseller' => 'required|boolean',
+            // For images, use "sometimes" so that they aren’t required if unchanged.
+            'image1' => 'sometimes|image|max:10240',
+            'image2' => 'sometimes|image|max:10240',
+            'image3' => 'sometimes|image|max:10240',
+            'image4' => 'sometimes|image|max:10240',
+            'image5' => 'sometimes|image|max:10240',
+            'updated_at' => Carbon::now(),
+        ]);
+
+        // Process file uploads if provided, else use existing values
+        if ($request->hasFile('image1')) {
+            $image1Path = $request->file('image1')->store('products', 'public');
+        } else {
+            $image1Path = $product->image1;
+        }
+        if ($request->hasFile('image2')) {
+            $image2Path = $request->file('image2')->store('products', 'public');
+        } else {
+            $image2Path = $product->image2;
+        }
+        if ($request->hasFile('image3')) {
+            $image3Path = $request->file('image3')->store('products', 'public');
+        } else {
+            $image3Path = $product->image3;
+        }
+        if ($request->hasFile('image4')) {
+            $image4Path = $request->file('image4')->store('products', 'public');
+        } else {
+            $image4Path = $product->image4;
+        }
+        if ($request->hasFile('image5')) {
+            $image5Path = $request->file('image5')->store('products', 'public');
+        } else {
+            $image5Path = $product->image5;
+        }
+
+        // Update the product record
+        $product->update([
+            'name' => $validationData['name'],
+            'description' => $validationData['description'],
+            'keyword' => $validationData['keyword'],
+            'price' => $validationData['price'],
+            'image1' => $image1Path,
+            'image2' => $image2Path,
+            'image3' => $image3Path,
+            'image4' => $image4Path,
+            'image5' => $image5Path,
+            'category_id' => $validationData['category'],
+            'sub_category_id' => $validationData['subCategory'],
+            'sizes' => json_encode($validationData['sizes']),
+            'bestseller' => $validationData['bestseller'],
+            'updated_at' => Carbon::now(),
+        ]);
+
+        Cache::forget('product');
+
+        return response()->json(['message' => $product->name . ' updated successfully'], 200);
     }
 }

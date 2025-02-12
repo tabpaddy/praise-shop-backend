@@ -45,4 +45,5 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/manage-product', [ProductController::class, 'getAllProduct']);
     Route::delete('/admin/manage-product/{delete}', [ProductController::class, 'deleteProduct']);
     Route::get('/admin/manage-product/{id}', [ProductController::class, 'getSingleProduct']);
+    Route::put('/admin/update-product/{id}', [ProductController::class, 'updateProduct']);
 });
