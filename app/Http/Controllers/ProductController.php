@@ -210,26 +210,31 @@ class ProductController extends Controller
 
         // Process file uploads if provided, else use existing values
         if ($request->hasFile('image1')) {
+            File::delete(storage_path('app/public/' . $product->image1));
             $image1Path = $request->file('image1')->store('products', 'public');
         } else {
             $image1Path = $product->image1;
         }
         if ($request->hasFile('image2')) {
+            File::delete(storage_path('app/public/' . $product->image2));
             $image2Path = $request->file('image2')->store('products', 'public');
         } else {
             $image2Path = $product->image2;
         }
         if ($request->hasFile('image3')) {
+            File::delete(storage_path('app/public/' . $product->image3));
             $image3Path = $request->file('image3')->store('products', 'public');
         } else {
             $image3Path = $product->image3;
         }
         if ($request->hasFile('image4')) {
+            File::delete(storage_path('app/public/' . $product->image4));
             $image4Path = $request->file('image4')->store('products', 'public');
         } else {
             $image4Path = $product->image4;
         }
         if ($request->hasFile('image5')) {
+            File::delete(storage_path('app/public/' . $product->image5));
             $image5Path = $request->file('image5')->store('products', 'public');
         } else {
             $image5Path = $product->image5;
