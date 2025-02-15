@@ -35,6 +35,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/admin/manage-user/{delete}', [ManageUserController::class, 'deleteUser']);
     Route::post('/admin/add-category', [CategoryController::class, 'addCategory']);
     Route::get('/admin/manage-category', [CategoryController::class, 'getAllCategory']);
+    Route::get('/admin/manage-user-count', [ManageUserController::class, 'countUser']);
     Route::delete('/admin/manage-category/{delete}', [CategoryController::class, 'deleteCategory']);
     Route::put('/admin/edit-category/{edit}', [CategoryController::class, 'editCategory']);
     Route::post('/admin/add-sub-category', [SubCategoryController::class, 'addSubCategory']);
@@ -46,4 +47,5 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/admin/manage-product/{delete}', [ProductController::class, 'deleteProduct']);
     Route::get('/admin/manage-product/{id}', [ProductController::class, 'getSingleProduct']);
     Route::put('/admin/update-product/{id}', [ProductController::class, 'updateProduct']);
+    Route::get('/admin/manage-product-count', [ProductController::class, 'countProduct']);
 });

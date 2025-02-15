@@ -68,6 +68,31 @@ class ManageUserController extends Controller
         return response()->json(['users' => $users]); // Note: Changed key to 'users'
     }
 
+     // count number of product
+     public function countUser()
+     {
+         $admin = auth('admin')->user();
+ 
+         // admin or subadmin
+         if (!$admin || !$admin->isAdminOrSubAdmin()) {
+             return response()->json(['message' => "Unauthorized."], 403);
+         }
+ 
+         // fetch all category
+         $user = User::all()->count();
+ 
+ 
+         if ($user) {
+             // Clear the cache for products if needed
+             Cache::forget('users');
+ 
+             return response()->json(['user' => $user], 200);
+         } else {
+             return response()->json(['message' => 'Could not count user'], 404);
+         }
+     }
+ 
+
 
     // delete a user
     public function deleteUser(Request $request, $userId)

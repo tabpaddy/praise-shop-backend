@@ -8,6 +8,7 @@ use App\Models\SubCategory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use PhpParser\Node\Stmt\TryCatch;
@@ -105,6 +106,30 @@ class ProductController extends Controller
         }
     }
 
+    // count number of product
+    public function countProduct()
+    {
+        $admin = auth('admin')->user();
+
+        // admin or subadmin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => "Unauthorized."], 403);
+        }
+
+        // fetch all category
+        $products = DB::table('products')->count();
+
+
+        if ($products) {
+            // Clear the cache for products if needed
+            Cache::forget('products');
+
+            return response()->json(['product' => $products], 200);
+        } else {
+            return response()->json(['message' => 'Could not count product'], 404);
+        }
+    }
+
     // get single product
     public function getSingleProduct($id)
     {
@@ -153,7 +178,7 @@ class ProductController extends Controller
         // find the product by id
         $product = Product::find($productId);
 
-        if(!$product) {
+        if (!$product) {
             return response()->json(['error' => 'Product not found'], 404);
         }
 
