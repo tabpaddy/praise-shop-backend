@@ -22,6 +22,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::post('/subscribe', [SubscribeController::class, "subscribe"]);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendRestLink']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
+Route::get('/get_bestseller', [ProductController::class, 'getBestSellers']);
+Route::get('get_latest_collection', [ProductController::class, 'getHomeProduct']);
 
 
 Route::post('/admin/login', [AuthAdminController::class, 'login']);

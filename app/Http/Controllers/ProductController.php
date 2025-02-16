@@ -287,4 +287,36 @@ class ProductController extends Controller
 
         return response()->json(['message' => $product->name . ' updated successfully'], 200);
     }
+
+    // Fetch bestseller products in random order, limited to 5 items
+    public function getBestSellers()
+    {
+        $bestSellers = Product::where('bestseller', true)
+            ->inRandomOrder()
+            ->limit(5)
+            ->get(['id', 'image1', 'price', 'name']);
+
+        // Map over products to include full image URLs
+        $bestSellers->transform(function ($product) {
+            $product->image1_url = asset(Storage::url($product->image1));
+            return $product;
+        });
+
+        return response()->json(['bestSellers' => $bestSellers], 200);
+    }
+
+    // get home product
+    public function getHomeProduct()
+    {
+        $home = Product::orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get(['id', 'image1', 'price', 'name']);
+
+        $home->transform(function ($product) {
+            $product->image1_url = asset(Storage::url($product->image1));
+            return $product;
+        });
+
+        return response()->json(['home' => $home]);
+    }
 }
