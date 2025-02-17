@@ -111,4 +111,12 @@ class SubCategoryController extends Controller
             return response()->json(['message' => 'SubCategory Updated.'], 200);
         }
     }
+
+    // get collection subCategory
+    public function getCollectionSubCategory()
+    {
+        // fetch subCategory
+        $subCategory = SubCategory::all(['id', 'sub_category_title']);
+        return response()->json(['subCategory' => $subCategory]);
+    }
 }

@@ -51,7 +51,7 @@ class CategoryController extends Controller
         }
 
         // fetch all category
-        $category = Cache::remember('categories', 60, function (){
+        $category = Cache::remember('categories', 60, function () {
             return Category::all();
         });
 
@@ -111,5 +111,14 @@ class CategoryController extends Controller
 
             return response()->json(['message' => 'Category Updated.'], 200);
         }
+    }
+
+    // get frontend category
+    public function getCollectionCategory()
+    {
+        // fetch all category
+        $category = Category::all(['id', 'category_title']);
+
+        return response()->json(['categories' => $category]);
     }
 }

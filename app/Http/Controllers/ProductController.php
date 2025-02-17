@@ -319,4 +319,19 @@ class ProductController extends Controller
 
         return response()->json(['home' => $home]);
     }
+
+    // get frontend product
+    public function getAllCollection()
+    {
+        // fetch all product
+        $collection = Product::with(['category', 'subCategory'])->inRandomOrder()->get(['id', 'image1', 'price', 'name', 'category_id', 'sub_category_id', 'created_at']);
+
+        // map over products to include full image urls
+        $collection->transform(function ($product) {
+            $product->image1_url = asset(Storage::url($product->image1));
+            return $product;
+        });
+
+        return response()->json(['collection' => $collection]);
+    }
 }
