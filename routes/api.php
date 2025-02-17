@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
+use App\Models\Category;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -23,7 +24,10 @@ Route::post('/subscribe', [SubscribeController::class, "subscribe"]);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendRestLink']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 Route::get('/get_bestseller', [ProductController::class, 'getBestSellers']);
-Route::get('get_latest_collection', [ProductController::class, 'getHomeProduct']);
+Route::get('/get_latest_collection', [ProductController::class, 'getHomeProduct']);
+Route::get('/collection', [ProductController::class, 'getAllCollection']);
+Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
+Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
 
 
 Route::post('/admin/login', [AuthAdminController::class, 'login']);
