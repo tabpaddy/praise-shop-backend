@@ -28,6 +28,8 @@ Route::get('/get_latest_collection', [ProductController::class, 'getHomeProduct'
 Route::get('/collection', [ProductController::class, 'getAllCollection']);
 Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
 Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
+Route::get('/single-product/{id}', [ProductController::class, 'getSingleUserProduct']);
+Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct']);
 
 
 Route::post('/admin/login', [AuthAdminController::class, 'login']);

@@ -334,4 +334,62 @@ class ProductController extends Controller
 
         return response()->json(['collection' => $collection]);
     }
+
+    // get single user product
+    public function getSingleUserProduct($id)
+    {
+        // Find the product with its category and sub-category relationships
+        $product = Product::with(['category', 'subCategory'])->find($id);
+
+        // Check if product exists
+        if (!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+        // Map image paths to full URLs using the Storage facade and asset helper
+        $product->image1_url = asset(Storage::url($product->image1));
+        $product->image2_url = asset(Storage::url($product->image2));
+        $product->image3_url = asset(Storage::url($product->image3));
+        $product->image4_url = asset(Storage::url($product->image4));
+        $product->image5_url = asset(Storage::url($product->image5));
+
+        // Decode sizes (stored as JSON in the database) into an array
+        $product->sizes = json_decode($product->sizes);
+
+        // Clear the cache for products if needed
+        //Cache::forget('products');
+
+        // Return the product in a JSON response
+        return response()->json(['product' => $product], 200);
+    }
+
+    // get liked item
+    public function getLikedProduct($id)
+    {
+        // Find the product first
+        $product = Product::find($id);
+
+        // If product is not found, return an error response
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        // Get related products based on category_id or sub_category_id
+        $relatedProducts = Product::where('id', '!=', $id) // Exclude the current product
+            ->where(function ($query) use ($product) {
+                $query->where('category_id', $product->category_id)
+                    ->orWhere('sub_category_id', $product->sub_category_id);
+            })
+            ->inRandomOrder()
+            ->limit(5)
+            ->get(['id', 'image1', 'price', 'name']);
+
+        // Transform image URLs
+        $relatedProducts->transform(function ($prod) {
+            $prod->image1_url = asset(Storage::url($prod->image1));
+            return $prod;
+        });
+
+        return response()->json(['relatedProducts' => $relatedProducts], 200);
+    }
 }
