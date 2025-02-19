@@ -10,7 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
-use App\Models\Category;
+use App\Http\Controllers\CartController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -30,6 +30,16 @@ Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
 Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
 Route::get('/single-product/{id}', [ProductController::class, 'getSingleUserProduct']);
 Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct']);
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/add-to-cart', [CartController::class, 'addToCart']);
+    Route::get('/cart', [CartController::class, 'getCart']);
+    Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
+    Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
+    Route::delete('/cart/clear', [CartController::class, 'clearCart']);
+});
+
 
 
 Route::post('/admin/login', [AuthAdminController::class, 'login']);
