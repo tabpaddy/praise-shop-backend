@@ -46,10 +46,28 @@ class CartController extends Controller
 
         $cartItems = Cart::where(function ($query) use ($userId, $sessionId) {
             $query->where('user_id', $userId)->orWhere('session_id', $sessionId);
-        })->with('product')->get();
+        })->with('products')->get();
 
         return response()->json($cartItems);
     }
+
+    // count cart items
+    public function countCart()
+    {
+        $userId = Auth::id();
+        $sessionId = request()->session()->getId();
+
+        $countCart = Cart::where(function ($query) use ($userId, $sessionId) {
+            $query->where('user_id', $userId)->orWhere('session_id', $sessionId);
+        })->count();
+
+        if ($countCart) {
+            return response()->json($countCart);
+        }else{
+            return response()->json(['count' => 0]);
+        }
+    }
+
 
     //  Merge Guest Cart After Login
     public function mergeCartAfterLogin()
@@ -66,9 +84,23 @@ class CartController extends Controller
     //  Remove Item from Cart
     public function removeFromCart($id)
     {
-        Cart::where('id', $id)->delete();
+        $userId = Auth::id();
+        $sessionId = request()->session()->getId();
+
+        $cartItem = Cart::where('id', $id)
+            ->where(function ($query) use ($userId, $sessionId) {
+                $query->where('user_id', $userId)
+                    ->orWhere('session_id', $sessionId);
+            })->first();
+
+        if (!$cartItem) {
+            return response()->json(['error' => 'Item not found'], 404);
+        }
+
+        $cartItem->delete();
         return response()->json(['message' => 'Item removed from cart']);
     }
+
 
     //  Clear Cart (Optional)
     public function clearCart()
@@ -77,10 +109,10 @@ class CartController extends Controller
         $sessionId = request()->session()->getId();
 
         Cart::where(function ($query) use ($userId, $sessionId) {
-            $query->where('user_id', $userId)->orWhere('session_id', $sessionId);
+            $query->where('user_id', $userId)
+                ->orWhere('session_id', $sessionId);
         })->delete();
 
         return response()->json(['message' => 'Cart cleared successfully']);
     }
 }
-

@@ -30,13 +30,14 @@ Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
 Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
 Route::get('/single-product/{id}', [ProductController::class, 'getSingleUserProduct']);
 Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct']);
+Route::post('/add-to-cart', [CartController::class, 'addToCart']);
+Route::get('/cart', [CartController::class, 'getCart']);
+Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/add-to-cart', [CartController::class, 'addToCart']);
-    Route::get('/cart', [CartController::class, 'getCart']);
+    Route::get('/count-cart', [CartController::class, 'countCart']);
     Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
-    Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
     Route::delete('/cart/clear', [CartController::class, 'clearCart']);
 });
 
