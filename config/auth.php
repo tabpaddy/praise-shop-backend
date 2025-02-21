@@ -46,6 +46,11 @@ return [
             'provider' => 'users',
         ],
 
+        'user' => [
+            'driver' => 'sanctum',
+            'provider' => 'user',
+        ],
+
         'admin' => [
             'driver' => 'sanctum',
             'provider' => 'admins', // Ensure this matches the provider for admins
@@ -79,6 +84,11 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        'user' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
 
         'admins' => [
             'driver' => 'eloquent',

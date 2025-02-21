@@ -39,18 +39,17 @@ class Kernel extends \Illuminate\Foundation\Http\Kernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // Add this
         ],
 
-        'api' => [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ],
 
         'api' => [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // ✅ Required for CSRF cookie to work
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \Illuminate\Session\Middleware\StartSession::class, // Enable sessions for API routes
         ],
+
 
     ];
 
@@ -73,5 +72,6 @@ class Kernel extends \Illuminate\Foundation\Http\Kernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
+        'auth.user' => \App\Http\Middleware\AuthenticateUser::class,
     ];
 }

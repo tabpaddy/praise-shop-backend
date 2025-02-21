@@ -13,17 +13,29 @@ class CorsMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
+        $config = config('cors');
+
         $response = $next($request);
 
-        $response->headers->set('Access-Control-Allow-Origin', env('ALLOWED_ORIGIN', '*'));
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        $origin = $request->headers->get('Origin');
 
-        // Handle preflight requests
-        if ($request->getMethod() === "OPTIONS") {
-            $response->setStatusCode(200);
+        if (in_array($origin, $config['allowed_origins'])) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+            $response->headers->set('Access-Control-Allow-Methods', implode(', ', $config['allowed_methods']));
+            $response->headers->set('Access-Control-Allow-Headers', implode(', ', $config['allowed_headers']));
+            $response->headers->set('Access-Control-Allow-Credentials', $config['supports_credentials']);
+
+            if ($request->getMethod() === 'OPTIONS') {
+                $response->headers->set('Access-Control-Max-Age', $config['max_age']);
+                return $response;
+            }
+
+            // Handle preflight requests
+            if ($request->isMethod('OPTIONS')) {
+                return response()->json('OK', 200, $response->headers->all());
+            }
         }
 
         return $response;

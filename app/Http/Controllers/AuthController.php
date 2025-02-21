@@ -57,6 +57,7 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token' => $token,
             'user' => $user,
+            'userId' => Auth::id(),
             'expiresIn' => now()->addMinutes(60),
         ]);
     }

@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    'driver' => env('SESSION_DRIVER', 'cookie'),
 
     /*
     |--------------------------------------------------------------------------
@@ -129,7 +129,7 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
+        Str::slug(env('APP_NAME', 'laravel'), '_') . '_session'
     ),
 
     /*
@@ -156,7 +156,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => env('SESSION_DOMAIN', null),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +169,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+
+    'secure' => env('SESSION_SECURE_COOKIE', false), // Change to true in production
+
 
     /*
     |--------------------------------------------------------------------------
@@ -200,6 +202,7 @@ return [
     */
 
     'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    // 'same_site' => 'none',
 
     /*
     |--------------------------------------------------------------------------
@@ -212,6 +215,6 @@ return [
     |
     */
 
-    'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
+    'partitioned' => env('SESSION_PARTITIONED_COOKIE', true),
 
 ];
