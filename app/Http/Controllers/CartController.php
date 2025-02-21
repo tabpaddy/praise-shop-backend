@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CartController extends Controller
@@ -52,19 +53,24 @@ class CartController extends Controller
     }
 
     // count cart items
-    public function countCart()
+    public function countCart(Request $request)
     {
-        $userId = Auth::id();
-        $sessionId = request()->session()->getId();
+        try {
+            $userId = Auth::id();
+            Log::debug($userId);
+            $sessionId = request()->session()->getId();
 
-        $countCart = Cart::where(function ($query) use ($userId, $sessionId) {
-            $query->where('user_id', $userId)->orWhere('session_id', $sessionId);
-        })->count();
+            $countCart = Cart::where(function ($query) use ($userId, $sessionId) {
+                $query->where('user_id', $userId)->orWhere('session_id', $sessionId);
+            })->count();
 
-        if ($countCart) {
-            return response()->json($countCart);
-        }else{
-            return response()->json(['count' => 0]);
+            if ($countCart) {
+                return response()->json(['count' => $countCart]);
+            } else {
+                return response()->json(['count' => 0]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
