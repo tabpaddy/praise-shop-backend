@@ -12,6 +12,10 @@ use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\CartController;
+use App\Http\Middleware\VerifyCsrfToken;
+use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
+
+Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -31,13 +35,12 @@ Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
 Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
 Route::get('/single-product/{id}', [ProductController::class, 'getSingleUserProduct']);
 Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct']);
-
+Route::post('/add-to-cart', [CartController::class, 'addToCart']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::middleware([EnsureFrontendRequestsAreStateful::class])->group(function () {
         Route::get('/count-cart', [CartController::class, 'countCart']);
-        Route::post('/add-to-cart', [CartController::class, 'addToCart']);
         Route::get('/cart', [CartController::class, 'getCart']);
         Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
         Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);

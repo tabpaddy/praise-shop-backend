@@ -6,7 +6,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/sanctum/csrf-cookie', function () {
-    return response()->json(['csrf_token' => csrf_token(), 'cookies' => request()->cookies->all()]);
-});
+use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
+
+Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
+
 

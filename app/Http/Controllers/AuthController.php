@@ -52,13 +52,12 @@ class AuthController extends Controller
 
         $token = $user->createToken('authToken')->plainTextToken;
 
-
         return response()->json([
             'message' => 'Login successful',
             'token' => $token,
             'user' => $user,
             'userId' => Auth::id(),
-            'expiresIn' => now()->addMinutes(60),
+            'expiresIn' => 60 * 60, // 60 minutes in seconds
         ]);
     }
 

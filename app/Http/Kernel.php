@@ -23,7 +23,6 @@ class Kernel extends \Illuminate\Foundation\Http\Kernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \App\Http\Middleware\CorsMiddleware::class,
     ];
 
     /**
@@ -39,15 +38,14 @@ class Kernel extends \Illuminate\Foundation\Http\Kernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // Add this
         ],
 
-
         'api' => [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // ✅ Required for CSRF cookie to work
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \Illuminate\Session\Middleware\StartSession::class, // Enable sessions for API routes
+            \Illuminate\Session\Middleware\StartSession::class, // Add this
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class, // Add this
         ],
 
 
