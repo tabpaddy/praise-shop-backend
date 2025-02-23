@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         //
-        \App\Http\Middleware\CorsMiddleware::class;
+       // \App\Http\Middleware\CorsMiddleware::class;
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

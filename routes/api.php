@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Http\Request;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -12,10 +11,7 @@ use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\CartController;
-use App\Http\Middleware\VerifyCsrfToken;
-use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
-Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -39,13 +35,11 @@ Route::post('/add-to-cart', [CartController::class, 'addToCart']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::middleware([EnsureFrontendRequestsAreStateful::class])->group(function () {
         Route::get('/count-cart', [CartController::class, 'countCart']);
         Route::get('/cart', [CartController::class, 'getCart']);
         Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
         Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
         Route::delete('/cart/clear', [CartController::class, 'clearCart']);
-    });
 });
 
 
