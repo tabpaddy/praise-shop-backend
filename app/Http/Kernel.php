@@ -71,5 +71,6 @@ class Kernel extends \Illuminate\Foundation\Http\Kernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
         'auth.user' => \App\Http\Middleware\AuthenticateUser::class,
+        'auth.sanctum.optional' => \App\Http\Middleware\OptionalSanctumAuth::class,
     ];
 }
