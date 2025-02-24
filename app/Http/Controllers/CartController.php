@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -21,29 +22,24 @@ class CartController extends Controller
             $request->validate([
                 'product_id' => 'required|exists:products,id',
                 'size' => 'required|string',
-                'cart_id' => 'required|string',
+                'cart_id' => 'required_without:user_id|string', // Required only if no user_id
             ]);
-
-            // if (!$request->hasSession()) {
-            //     // \Log::warning('No session available on request');
-            //     // Force session start if middleware failed
-            //     $request->session()->start();
-            // }
-
 
             // $sessionId = $request->session()->getId();
             $userId = Auth::id();
             $cartId = $request->cart_id;
-            \Log::info("Session ID: $sessionId, User ID: " . ($userId ?? 'null'));
+            \Log::info("Cart ID: " . ($cartId ?? 'null') . ", User ID: " . ($userId ?? 'null'));
+            \Log::info("Auth check: " . (Auth::check() ? 'authenticated' : 'not authenticated'));
+            \Log::info("Request headers: " . json_encode($request->headers->all()));
 
             $existingCart = Cart::where(function ($query) use ($userId, $cartId) {
-                $query->where('user_id', $userId)->orWhere('session_id', $cartId);
+                $query->where('user_id', $userId)->orWhere('cart_id', $cartId);
             })->where('product_id', $request->product_id)->where('size', $request->size)->first();
 
             if (!$existingCart) {
                 Cart::create([
                     'user_id' => $userId,
-                    'session_id' => $userId ? null : $cartId,
+                    'cart_id' => $userId ? null : $cartId, // Use existing or generate new cart_id for guests
                     'product_id' => $request->product_id,
                     'size' => $request->size,
                     'created_at' => now(),
@@ -65,8 +61,7 @@ class CartController extends Controller
     {
         $userId = Auth::id();
 
-
-        $cartItems = Cart::where(function ($query) use ($userId, $cartId) {
+        $cartItems =  Cart::where(function ($query) use ($userId, $cartId) {
             $query->where('user_id', $userId)->orWhere('cart_id', $cartId);
         })->with('products')->get();
 
@@ -78,24 +73,24 @@ class CartController extends Controller
     {
         try {
             $request->validate([
-                'cart_id' => 'required|string',
+                'cart_id' => 'nullable|string'
             ]);
-
-            $cartId = $request->cart_id;
             $userId = Auth::id();
-            Log::debug($userId);
-
+            $cartId = $request->cart_id;
+            Log::info("Counting cart - Cart ID: $cartId, User ID: " . ($userId ?? 'null'));
 
             $countCart = Cart::where(function ($query) use ($userId, $cartId) {
-                $query->where('user_id', $userId)->orWhere('cart_id', $cartId);
+                if ($userId) {
+                    $query->where('user_id', $userId);
+                } else {
+                    $query->where('cart_id', $cartId);
+                }
             })->count();
 
-            if ($countCart) {
-                return response()->json(['count' => $countCart]);
-            } else {
-                return response()->json(['count' => 0]);
-            }
+            Log::info("Cart count: $countCart");
+            return response()->json(['count' => $countCart ?: 0]);
         } catch (\Exception $e) {
+            Log::error('Count cart failed: ' . $e->getMessage() . "\nStack: " . $e->getTraceAsString());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -124,15 +119,20 @@ class CartController extends Controller
     }
 
     //  Remove Item from Cart
-    public function removeFromCart($id)
+    public function removeFromCart(Request $request)
     {
-        $userId = Auth::id();
-        $sessionId = request()->session()->getId();
+        $request->validate([
+            'id' => 'required',
+            'cart_id' => 'nullable|string',
+        ]);
 
+        $userId = Auth::id();
+        $id = $request->id;
+        $cartId = $request->cart_id;
         $cartItem = Cart::where('id', $id)
-            ->where(function ($query) use ($userId, $sessionId) {
+            ->where(function ($query) use ($userId, $cartId) {
                 $query->where('user_id', $userId)
-                    ->orWhere('session_id', $sessionId);
+                    ->orWhere('cart_id', $cartId);
             })->first();
 
         if (!$cartItem) {

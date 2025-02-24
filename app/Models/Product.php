@@ -43,4 +43,14 @@ class Product extends Model
     {
         return $this->belongsTo(SubCategory::class);
     }
+
+    /**
+     * Define the relationship to the Cart model (optional).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function carts()
+    {
+        return $this->hasMany(Cart::class, 'product_id', 'id');
+    }
 }

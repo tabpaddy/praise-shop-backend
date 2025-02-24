@@ -31,12 +31,11 @@ Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
 Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
 Route::get('/single-product/{id}', [ProductController::class, 'getSingleUserProduct']);
 Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct']);
-Route::post('/add-to-cart', [CartController::class, 'addToCart']);
-
+Route::post('/add-to-cart', [CartController::class, 'addToCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
+Route::post('/count-cart', [CartController::class, 'countCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
+Route::get('/cart/{cartId}', [CartController::class, 'getCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 
 Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/count-cart', [CartController::class, 'countCart']);
-        Route::get('/cart', [CartController::class, 'getCart']);
         Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
         Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
         Route::delete('/cart/clear', [CartController::class, 'clearCart']);
