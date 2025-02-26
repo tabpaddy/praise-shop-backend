@@ -61,16 +61,21 @@ class CartController extends Controller
     public function getCart($cartId)
     {
         $userId = Auth::id();
-
-        $cartItems =  Cart::where(function ($query) use ($userId, $cartId) {
-            $query->where('user_id', $userId)->orWhere('cart_id', $cartId);
-        })->with('product')->get();
-
-        $cartItems->transform(function ($items){
-        $items->image1_url = asset(Storage::url($items->product->image1));
-            return $items;
+        $query = Cart::query();
+        Log::info("Fetching cart - User ID: " . ($userId ?? 'null') . ", Cart ID: " . $cartId);
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('user_id', null)->where('cart_id', $cartId);
+        }
+        $cartItems = $query->with('product')->get()->filter(function ($item) {
+            return $item->product !== null;
         });
-
+        $cartItems->transform(function ($item) {
+            $item->image1_url = asset(Storage::url($item->product->image1));
+            return $item;
+        });
+        Log::info("Cart items fetched: " . $cartItems->toJson());
         return response()->json($cartItems);
     }
 
@@ -116,21 +121,21 @@ class CartController extends Controller
             // Get guest cart items
             $guestCartItems = Cart::where('cart_id', $cartId)->get();
 
-        foreach ($guestCartItems as $guestItem) {
-            // Check if this item already exists in the user's cart
-            $existingItem = Cart::where('user_id', $userId)
-                ->where('product_id', $guestItem->product_id)
-                ->where('size', $guestItem->size)
-                ->first();
+            foreach ($guestCartItems as $guestItem) {
+                // Check if this item already exists in the user's cart
+                $existingItem = Cart::where('user_id', $userId)
+                    ->where('product_id', $guestItem->product_id)
+                    ->where('size', $guestItem->size)
+                    ->first();
 
-            if ($existingItem) {
-                // Item already exists in user's cart, remove the guest duplicate
-                $guestItem->delete();
-            } else {
-                // Merge unique item by updating user_id and clearing cart_id
-                $guestItem->update(['user_id' => $userId, 'cart_id' => null]);
+                if ($existingItem) {
+                    // Item already exists in user's cart, remove the guest duplicate
+                    $guestItem->delete();
+                } else {
+                    // Merge unique item by updating user_id and clearing cart_id
+                    $guestItem->update(['user_id' => $userId, 'cart_id' => null]);
+                }
             }
-        }
 
             return response()->json(['message' => 'Cart merged successfully']);
         } catch (\Exception $e) {
@@ -142,17 +147,17 @@ class CartController extends Controller
     //  Remove Item from Cart
     public function removeFromCart(Request $request, $id)
     {
-        $request->validate([
-            'cart_id' => 'nullable|string',
-        ]);
-
         $userId = Auth::id();
-        $cartId = $request->cart_id;
+        $cartId = $request->input('cart_id'); // Get cart_id from request body
         $cartItem = Cart::where('id', $id)
-            ->where(function ($query) use ($userId, $cartId) {
-                $query->where('user_id', $userId)
-                    ->orWhere('cart_id', $cartId);
-            })->first();
+        ->where(function ($query) use ($userId, $cartId) {
+            if ($userId) {
+                $query->where('user_id', $userId);
+            } else {
+                $query->where('cart_id', $cartId);
+            }
+        })
+        ->first();
 
         if (!$cartItem) {
             return response()->json(['error' => 'Item not found'], 404);
