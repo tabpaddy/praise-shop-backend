@@ -16,7 +16,7 @@ class SubscribeController extends Controller
 
         $subscribe = Subscribe::create([
             'email' => $validatedData['email'],
-            'ip_address' => $request->ip(),
+            'ip_address' => $request->ip_address,
         ]);
 
         if($subscribe){
@@ -24,6 +24,6 @@ class SubscribeController extends Controller
         }else{
             return response()->json(['message' => 'Subscription data failed to store!'], 500);
         };
-        
+
     }
 }

@@ -34,9 +34,9 @@ Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct'])
 Route::post('/add-to-cart', [CartController::class, 'addToCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 Route::post('/count-cart', [CartController::class, 'countCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 Route::get('/cart/{cartId}', [CartController::class, 'getCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
+Route::delete('/remove-item/{id}', [CartController::class, 'removeFromCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 
 Route::middleware('auth:sanctum')->group(function () {
-        Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
         Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
         Route::delete('/cart/clear', [CartController::class, 'clearCart']);
 });

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CartController extends Controller
@@ -22,7 +23,7 @@ class CartController extends Controller
             $request->validate([
                 'product_id' => 'required|exists:products,id',
                 'size' => 'required|string',
-                'cart_id' => 'required_without:user_id|string', // Required only if no user_id
+                'cart_id' => 'required|string', // Required only if no user_id
             ]);
 
             // $sessionId = $request->session()->getId();
@@ -39,7 +40,7 @@ class CartController extends Controller
             if (!$existingCart) {
                 Cart::create([
                     'user_id' => $userId,
-                    'cart_id' => $userId ? null : $cartId, // Use existing or generate new cart_id for guests
+                    'cart_id' => $cartId, // Use existing or generate new cart_id for guests
                     'product_id' => $request->product_id,
                     'size' => $request->size,
                     'created_at' => now(),
@@ -63,7 +64,12 @@ class CartController extends Controller
 
         $cartItems =  Cart::where(function ($query) use ($userId, $cartId) {
             $query->where('user_id', $userId)->orWhere('cart_id', $cartId);
-        })->with('products')->get();
+        })->with('product')->get();
+
+        $cartItems->transform(function ($items){
+        $items->image1_url = asset(Storage::url($items->product->image1));
+            return $items;
+        });
 
         return response()->json($cartItems);
     }
@@ -107,9 +113,24 @@ class CartController extends Controller
             $userId = Auth::id();
             $cartId = $request->cart_id;
 
-            // Update guest carts to associate with the user
-            Cart::where('cart_id', $cartId)
-                ->update(['user_id' => $userId, 'cart_id' => null]);
+            // Get guest cart items
+            $guestCartItems = Cart::where('cart_id', $cartId)->get();
+
+        foreach ($guestCartItems as $guestItem) {
+            // Check if this item already exists in the user's cart
+            $existingItem = Cart::where('user_id', $userId)
+                ->where('product_id', $guestItem->product_id)
+                ->where('size', $guestItem->size)
+                ->first();
+
+            if ($existingItem) {
+                // Item already exists in user's cart, remove the guest duplicate
+                $guestItem->delete();
+            } else {
+                // Merge unique item by updating user_id and clearing cart_id
+                $guestItem->update(['user_id' => $userId, 'cart_id' => null]);
+            }
+        }
 
             return response()->json(['message' => 'Cart merged successfully']);
         } catch (\Exception $e) {
@@ -119,15 +140,13 @@ class CartController extends Controller
     }
 
     //  Remove Item from Cart
-    public function removeFromCart(Request $request)
+    public function removeFromCart(Request $request, $id)
     {
         $request->validate([
-            'id' => 'required',
             'cart_id' => 'nullable|string',
         ]);
 
         $userId = Auth::id();
-        $id = $request->id;
         $cartId = $request->cart_id;
         $cartItem = Cart::where('id', $id)
             ->where(function ($query) use ($userId, $cartId) {
