@@ -57,4 +57,8 @@ class Product extends Model
     public function users(){
         return $this->hasMany(User::class, 'user_id', 'id');
     }
+
+    public function orders(){
+        return $this->hasMany(Order::class, 'product_id', 'id');
+    }
 }

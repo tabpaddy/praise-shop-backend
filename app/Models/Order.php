@@ -11,16 +11,28 @@ class Order extends Model
     //
     use HasFactory;
 
-    protected $fillable = ['user_id', 'product_id', 'amount', 'invoice_no', 'qty', 'size', 'order_status', 'total_product'];
+    protected $fillable = [
+        'user_id',
+        'product_id',
+        'delivery_information_id',
+        'amount',
+        'invoice_no',
+        'qty',
+        'size',
+        'order_status',
+        'payment_method',
+        'payment_status'
+    ];
 
 
-    public function product(): BelongsTo{
+    public function product(): BelongsTo
+    {
         return $this->belongsTo(Product::class, 'product_id', 'id');
     }
 
-    public function user(): BelongsTo{
-        return $this->belongsTo(User::class, 'user_id', 'id');
+
+    public function deliveryInformation(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryInformation::class, 'delivery_information_id', 'id');
     }
-
-
 }
