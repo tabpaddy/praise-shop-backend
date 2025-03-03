@@ -11,7 +11,7 @@ use App\Http\Controllers\ManageUserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\CartController;
-
+use App\Http\Controllers\OrderController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -39,6 +39,8 @@ Route::delete('/remove-item/{id}', [CartController::class, 'removeFromCart'])->m
 Route::middleware('auth:sanctum')->group(function () {
         Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
         Route::delete('/cart/clear', [CartController::class, 'clearCart']);
+        Route::post('/payment-order', [OrderController::class, 'store']);
+        Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
 });
 
 
