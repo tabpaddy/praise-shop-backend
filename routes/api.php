@@ -37,10 +37,11 @@ Route::get('/cart/{cartId}', [CartController::class, 'getCart'])->middleware(\Ap
 Route::delete('/remove-item/{id}', [CartController::class, 'removeFromCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 
 Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
-        Route::delete('/cart/clear', [CartController::class, 'clearCart']);
-        Route::post('/payment-order', [OrderController::class, 'store']);
-        Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
+    Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
+    Route::delete('/cart/clear', [CartController::class, 'clearCart']);
+    Route::post('/payment-order', [OrderController::class, 'store']);
+    Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
+    Route::get('delivery-information', [OrderController::class, 'deliveryInformation']);
 });
 
 

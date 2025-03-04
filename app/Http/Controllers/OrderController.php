@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
+
 class OrderController extends Controller
 {
     //
@@ -16,8 +17,11 @@ class OrderController extends Controller
         $user = auth()->user();
 
         // Get or create delivery information
-        $deliveryInfo = DeliveryInformation::firstOrCreate(
+        $deliveryInfo = DeliveryInformation::firstOrNew(
             ['user_id' => $user->id],
+        );
+
+        $deliveryInfo->fill(
             [
                 'first_name' => $request->firstName,
                 'last_name' => $request->lastName,
@@ -31,6 +35,8 @@ class OrderController extends Controller
             ]
         );
 
+        $deliveryInfo->save();
+
         // Create order
         $order = Order::create([
             'user_id' => $user->id,
@@ -39,14 +45,18 @@ class OrderController extends Controller
             'amount' => $request->total,
             'qty' => $request->quantity,
             'size' => $request->size,
-            'invoice_no' => 'ORD-'.Str::upper(Str::random(8)),
+            'invoice_no' => 'ORD-' . Str::upper(Str::random(8)),
             'payment_method' => $request->paymentMethod,
             'order_status' => 'pending'
         ]);
 
+        // Kick off the payment flow
         return $this->handlePayment($order, $request->paymentMethod);
     }
 
+    /**
+     * Decide how to handle the chosen payment method.
+     */
     private function handlePayment(Order $order, $method)
     {
         switch ($method) {
@@ -60,9 +70,17 @@ class OrderController extends Controller
             case 'stripe':
                 // Keep existing Stripe implementation
                 return $this->handleStripePayment($order);
-                break;
+
+            default:
+                return response()->json([
+                    'error' => 'Unsupported payment method'
+                ], 400);
         }
     }
+
+    /**
+     * Paystack Payment Logic
+     */
 
     private function handlePaystackPayment(Order $order)
     {
@@ -78,15 +96,27 @@ class OrderController extends Controller
         ];
 
         return response()->json([
-            'payment_url' => 'https://checkout.paystack.com/'.env('PAYSTACK_PUBLIC_KEY'),
+            'payment_url' => 'https://checkout.paystack.com/' . env('PAYSTACK_PUBLIC_KEY'),
             'payment_data' => $paymentData,
             'callback_url' => route('payment.callback')
         ]);
     }
 
+    /**
+     * Handle Paystack's payment callback
+     */
+
     public function handlePaymentCallback(Request $request)
     {
         $paymentDetails = Paystack::getPaymentData();
+
+        // For demonstration:
+        // $paymentDetails = [
+        //     'data' => [
+        //         'status'   => 'success',
+        //         'metadata' => ['order_id' => 1]
+        //     ]
+        // ];
 
         if ($paymentDetails['data']['status'] === 'success') {
             $order = Order::find($paymentDetails['data']['metadata']['order_id']);
@@ -101,23 +131,41 @@ class OrderController extends Controller
         return redirect('/payment-failed');
     }
 
+    /**
+     * Stripe Payment Logic
+     */
     private function handleStripePayment(Order $order)
     {
+        // Set your Stripe secret key
         Stripe::setApiKey(config('services.stripe.secret'));
 
+        // Create a PaymentIntent
         $paymentIntent = PaymentIntent::create([
             'amount' => $order->amount * 100, // Convert to kobo
-            'currency' => 'ngn',
+            'currency' => 'ngn', // or 'usd',
             'payment_method_types' => ['card'],
             'metadata' => [
                 'order_id' => $order->id
             ]
         ]);
 
+        // Return the client secret so the frontend can confirm the payment
         return response()->json([
             'clientSecret' => $paymentIntent->client_secret,
             'paymentMethod' => 'stripe'
         ]);
     }
 
+    public function deliveryInformation()
+    {
+        $user = auth()->user();
+
+        $deliveryInfo = DeliveryInformation::find($user);
+
+        if (!$deliveryInfo) {
+            return;
+        } else {
+            return response()->json(['deliveryInfo' => $deliveryInfo], 200);
+        }
+    }
 }
