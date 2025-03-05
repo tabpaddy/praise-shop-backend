@@ -163,7 +163,7 @@ class OrderController extends Controller
         $deliveryInfo = DeliveryInformation::where('user_id', $user->id)->first();
 
         if (!$deliveryInfo) {
-            return;
+            return response()->json(['message' => 'No delivery information found'], 404);
         } else {
             return response()->json(['deliveryInfo' => $deliveryInfo], 200);
         }
