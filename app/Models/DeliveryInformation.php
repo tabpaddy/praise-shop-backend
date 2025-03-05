@@ -11,6 +11,7 @@ class DeliveryInformation extends Model
 {
     //
     use HasFactory;
+    protected $table = 'delivery_informations';
 
     protected $fillable = ['user_id', 'first_name', 'last_name', 'email', 'street', 'city', 'state', 'zip_code', 'country', 'phone'];
 

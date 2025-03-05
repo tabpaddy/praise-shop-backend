@@ -41,7 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/cart/clear', [CartController::class, 'clearCart']);
     Route::post('/payment-order', [OrderController::class, 'store']);
     Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
-    Route::get('delivery-information', [OrderController::class, 'deliveryInformation']);
+    Route::get('/delivery-information', [OrderController::class, 'deliveryInformation']);
 });
 
 

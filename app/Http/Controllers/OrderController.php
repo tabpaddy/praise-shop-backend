@@ -160,7 +160,7 @@ class OrderController extends Controller
     {
         $user = auth()->user();
 
-        $deliveryInfo = DeliveryInformation::find($user);
+        $deliveryInfo = DeliveryInformation::where('user_id', $user->id)->first();
 
         if (!$deliveryInfo) {
             return;
