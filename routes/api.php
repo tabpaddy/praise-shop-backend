@@ -12,6 +12,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\SearchController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -31,6 +32,7 @@ Route::get('/category', [CategoryController::class, 'getCollectionCategory']);
 Route::get('/sub_category', [SubCategoryController::class, 'getCollectionSubCategory']);
 Route::get('/single-product/{id}', [ProductController::class, 'getSingleUserProduct']);
 Route::get('/liked-product/{id}', [ProductController::class, 'getLikedProduct']);
+Route::get('/search', [SearchController::class, 'searchProducts']);
 Route::post('/add-to-cart', [CartController::class, 'addToCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 Route::post('/count-cart', [CartController::class, 'countCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 Route::get('/cart/{cartId}', [CartController::class, 'getCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
