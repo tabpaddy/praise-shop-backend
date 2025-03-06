@@ -20,14 +20,20 @@ class CartController extends Controller
         // \Log::info('Request cookies: ' . json_encode($request->cookies->all()));
         // \Log::info('addToCart called with data: ' . json_encode($request->all()));
         try {
-            $request->validate([
+            $userId = Auth::id();
+            $validationRules = [
                 'product_id' => 'required|exists:products,id',
                 'size' => 'required|string',
-                'cart_id' => 'required|string', // Required only if no user_id
-            ]);
+            ];
+
+            // Only require cart_id if the user is not authenticated
+            if (!$userId) {
+                $validationRules['cart_id'] = 'required|string';
+            }
+
+            $request->validate($validationRules);
 
             // $sessionId = $request->session()->getId();
-            $userId = Auth::id();
             $cartId = $request->cart_id;
             \Log::info("Cart ID: " . ($cartId ?? 'null') . ", User ID: " . ($userId ?? 'null'));
             \Log::info("Auth check: " . (Auth::check() ? 'authenticated' : 'not authenticated'));
@@ -150,14 +156,14 @@ class CartController extends Controller
         $userId = Auth::id();
         $cartId = $request->input('cart_id'); // Get cart_id from request body
         $cartItem = Cart::where('id', $id)
-        ->where(function ($query) use ($userId, $cartId) {
-            if ($userId) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->where('cart_id', $cartId);
-            }
-        })
-        ->first();
+            ->where(function ($query) use ($userId, $cartId) {
+                if ($userId) {
+                    $query->where('user_id', $userId);
+                } else {
+                    $query->where('cart_id', $cartId);
+                }
+            })
+            ->first();
 
         if (!$cartItem) {
             return response()->json(['error' => 'Item not found'], 404);
