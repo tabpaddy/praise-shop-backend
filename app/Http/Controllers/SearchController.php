@@ -11,7 +11,11 @@ class SearchController extends Controller
     // In ProductController.php
 public function searchProducts(Request $request)
 {
-    $query = $request->input('query');
+    $query = $request->query("query"); // Get from query parameter
+
+    \Log::info("Query: " . ($query ?? 'null'));
+    \Log::info("Request query parameters: " . json_encode($request->query()));
+    \Log::info("Full URL: " . $request->fullUrl());
 
     // If query is empty or null, return an empty array
     if (!$query) {
@@ -19,10 +23,10 @@ public function searchProducts(Request $request)
     }
 
     // Fetch products that match the query in name, keyword, or description
-    $products = Product::where('name', 'LIKE', '%'.$query.'%')
-        ->orWhere('keyword', 'LIKE', '%'.$query.'%')
-        ->orWhere('description', 'LIKE', '%'.$query.'%')
-        ->get();
+    $products = Product::where('name', 'LIKE', '%' . $query . '%')
+            ->orWhere('keyword', 'LIKE', '%' . $query . '%')
+            ->orWhere('description', 'LIKE', '%' . $query . '%')
+            ->get();
 
     // Transform image paths to full URLs
     $products->transform(function ($prod) {
