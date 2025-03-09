@@ -23,9 +23,9 @@ public function searchProducts(Request $request)
     }
 
     // Fetch products that match the query in name, keyword, or description
-    $products = Product::where('name', 'LIKE', '%' . $query . '%')
-            ->orWhere('keyword', 'LIKE', '%' . $query . '%')
-            ->orWhere('description', 'LIKE', '%' . $query . '%')
+    $products = Product::where('keyword', 'LIKE', '%' . $query . '%')
+            ->orWhere('name', 'LIKE', '%' . $query . '%')
+            // ->orWhere('description', 'LIKE', '%' . $query . '%')
             ->get();
 
     // Transform image paths to full URLs
