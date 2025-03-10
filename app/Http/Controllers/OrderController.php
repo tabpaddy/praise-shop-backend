@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendOrderJob;
 use App\Models\DeliveryInformation;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
@@ -62,6 +64,7 @@ class OrderController extends Controller
         switch ($method) {
             case 'cod':
                 $order->update(['payment_status' => 'pending']);
+                SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
                 return response()->json(['redirect' => '/order-success']);
 
             case 'paystack':
@@ -84,21 +87,33 @@ class OrderController extends Controller
 
     private function handlePaystackPayment(Order $order)
     {
-        $paymentData = [
-            'amount' => $order->amount * 100, // Paystack expects kobo
-            'email' => $order->deliveryInformation->email,
-            'reference' => Str::uuid(),
-            'currency' => 'NGN',
-            'metadata' => [
-                'order_id' => $order->id,
-                'user_id' => $order->user_id
-            ]
-        ];
+        $reference = Str::uuid(); // Generate unique reference
+
+        // Initialize Paystack transaction
+        $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
+            ->post('https://api.paystack.co/transaction/initialize', [
+                'amount' => $order->amount * 100, //to support kobo
+                'email' => $order->deliveryInformation->email,
+                'reference' => $reference,
+                'currency' => 'NGN',
+                'callback_url' => route('payment.callback'),
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id
+                ]
+            ]);
+
+        $paymentData = $response->json();
+
+        if (!$paymentData['status']) {
+            return response()->json(['error' => 'Payment initialization failed'], 500);
+        }
+
+        // Store Paystack reference in order
+        $order->update(['payment_reference' => $reference]);
 
         return response()->json([
-            'payment_url' => 'https://checkout.paystack.com/' . env('PAYSTACK_PUBLIC_KEY'),
-            'payment_data' => $paymentData,
-            'callback_url' => route('payment.callback')
+            'payment_url' => $paymentData['data']['authorization_url']
         ]);
     }
 
@@ -108,28 +123,55 @@ class OrderController extends Controller
 
     public function handlePaymentCallback(Request $request)
     {
-        $paymentDetails = Paystack::getPaymentData();
+        $reference = $request->query('reference');
 
-        // For demonstration:
-        // $paymentDetails = [
-        //     'data' => [
-        //         'status'   => 'success',
-        //         'metadata' => ['order_id' => 1]
-        //     ]
-        // ];
+        // Verify transaction with Paystack
+        $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
+            ->get("https://api.paystack.co/transaction/verify/$reference");
+
+        $paymentDetails = $response->json();
 
         if ($paymentDetails['data']['status'] === 'success') {
-            $order = Order::find($paymentDetails['data']['metadata']['order_id']);
+            $order = Order::where('payment_reference', $reference)->first();
             $order->update([
                 'payment_status' => 'paid',
                 'order_status' => 'processing'
             ]);
+
+            SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
 
             return redirect('/order-success');
         }
 
         return redirect('/payment-failed');
     }
+
+    // public function handlePaymentCallback(Request $request)
+    // {
+    //     $paymentDetails = Paystack::getPaymentData();
+
+    //     // For demonstration:
+    //     // $paymentDetails = [
+    //     //     'data' => [
+    //     //         'status'   => 'success',
+    //     //         'metadata' => ['order_id' => 1]
+    //     //     ]
+    //     // ];
+
+    //     if ($paymentDetails['data']['status'] === 'success') {
+    //         $order = Order::find($paymentDetails['data']['metadata']['order_id']);
+    //         $order->update([
+    //             'payment_status' => 'paid',
+    //             'order_status' => 'processing'
+    //         ]);
+
+    //         SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
+
+    //         return redirect('/order-success');
+    //     }
+
+    //     return redirect('/payment-failed');
+    // }
 
     /**
      * Stripe Payment Logic
@@ -163,7 +205,7 @@ class OrderController extends Controller
         $deliveryInfo = DeliveryInformation::where('user_id', $user->id)->first();
 
         if (!$deliveryInfo) {
-            return response()->json(['message' => 'No delivery information found'], 404);
+            return;
         } else {
             return response()->json(['deliveryInfo' => $deliveryInfo], 200);
         }
