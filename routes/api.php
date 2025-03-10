@@ -13,6 +13,7 @@ use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\StripeController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -44,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payment-order', [OrderController::class, 'store']);
     Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
     Route::get('/delivery-information', [OrderController::class, 'deliveryInformation']);
+    Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 });
 
 
