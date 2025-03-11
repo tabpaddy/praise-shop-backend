@@ -18,6 +18,21 @@ class OrderController extends Controller
     {
         $user = auth()->user();
 
+        // Validate request data
+        $request->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'street' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'zipCode' => 'required|string|max:20',
+            'country' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'paymentMethod' => 'required|in:cod,paystack,stripe',
+            'total' => 'required|numeric|min:0',
+        ]);
+
         // Get or create delivery information
         $deliveryInfo = DeliveryInformation::firstOrNew(
             ['user_id' => $user->id],
@@ -33,7 +48,7 @@ class OrderController extends Controller
                 'state' => $request->state,
                 'zip_code' => $request->zipCode,
                 'country' => $request->country,
-                'phone' => $request->phone
+                'phone' => $request->phone 
             ]
         );
 
