@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendOrderJob;
+use App\Models\Cart;
 use App\Models\DeliveryInformation;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -48,23 +49,43 @@ class OrderController extends Controller
                 'state' => $request->state,
                 'zip_code' => $request->zipCode,
                 'country' => $request->country,
-                'phone' => $request->phone 
+                'phone' => $request->phone
             ]
         );
 
         $deliveryInfo->save();
 
+        // Fetch cart items
+        $cartItems = Cart::where('user_id', $user->id)->with('product')->get();
+        if ($cartItems->isEmpty()) {
+            return response()->json(['error' => 'Cart is empty'], 400);
+        }
+
+        // Validate total
+        $subtotal = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
+        $shippingFee = $subtotal * 0.1; // Matches frontend
+        $calculatedTotal = $subtotal + $shippingFee;
+
+        if (abs($calculatedTotal - $request->total) > 0.01) {
+            return response()->json(['error' => 'Total amount mismatch'], 400);
+        }
+
         // Create order
         $order = Order::create([
             'user_id' => $user->id,
-            'product_id' => $request->product_id,
             'delivery_information_id' => $deliveryInfo->id,
-            'amount' => $request->total,
-            'qty' => $request->quantity,
-            'size' => $request->size,
+            'amount' => $calculatedTotal,
             'invoice_no' => 'ORD-' . Str::upper(Str::random(8)),
             'payment_method' => $request->paymentMethod,
-            'order_status' => 'pending'
+            'order_status' => 'pending',
+            'payment_status' => 'pending',
+            'items' => $cartItems->map(fn($item) => [
+                'product_id' => $item->product_id,
+                'name' => $item->product->name,
+                'quantity' => $item->quantity,
+                'size' => $item->size,
+                'price' => $item->product->price,
+            ])->toJson(),
         ]);
 
         // Kick off the payment flow
@@ -79,14 +100,25 @@ class OrderController extends Controller
         switch ($method) {
             case 'cod':
                 $order->update(['payment_status' => 'pending']);
-                SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
+                // Clear cart
+                Cart::where('user_id', $order->user_id)->delete();
+                SendOrderJob::dispatch(
+                    $order->deliveryInformation->email,
+                    $order->deliveryInformation->first_name,
+                    $order->deliveryInformation->last_name,
+                    json_decode($order->items, true), // Pass items array
+                    $order->invoice_no,
+                    $order->amount,
+                    $order->order_status,
+                    $order->payment_method,
+                    $order->payment_status
+                );
                 return response()->json(['redirect' => '/order-success']);
 
             case 'paystack':
                 return $this->handlePaystackPayment($order);
 
             case 'stripe':
-                // Keep existing Stripe implementation
                 return $this->handleStripePayment($order);
 
             default:
@@ -153,7 +185,17 @@ class OrderController extends Controller
                 'order_status' => 'processing'
             ]);
 
-            SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
+            SendOrderJob::dispatch(
+                $order->deliveryInformation->email,
+                $order->deliveryInformation->first_name,
+                $order->deliveryInformation->last_name,
+                json_decode($order->items, true),
+                $order->invoice_no,
+                $order->amount,
+                $order->order_status,
+                $order->payment_method,
+                $order->payment_status
+            );
 
             return redirect('/order-success');
         }

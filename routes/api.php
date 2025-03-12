@@ -12,6 +12,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaystackController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StripeController;
 
@@ -38,6 +39,8 @@ Route::post('/add-to-cart', [CartController::class, 'addToCart'])->middleware(\A
 Route::post('/count-cart', [CartController::class, 'countCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 Route::get('/cart/{cartId}', [CartController::class, 'getCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
 Route::delete('/remove-item/{id}', [CartController::class, 'removeFromCart'])->middleware(\App\Http\Middleware\OptionalSanctumAuth::class);
+Route::post('/paystack/webhook', [PaystackController::class, 'handleWebhook']);
+Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/merge-cart', [CartController::class, 'mergeCartAfterLogin']);
@@ -45,7 +48,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payment-order', [OrderController::class, 'store']);
     Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
     Route::get('/delivery-information', [OrderController::class, 'deliveryInformation']);
-    Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 });
 
 
