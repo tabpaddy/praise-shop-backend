@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Jobs\SendOrderJob;
+use App\Models\Cart;
 use App\Models\Order;
 use Stripe\Webhook;
 
@@ -31,8 +32,20 @@ class StripeController extends Controller
             'payment_status' => 'paid',
             'order_status' => 'processing'
         ]);
+
+        Cart::where('user_id', $order->user_id)->delete();
         
-        SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
+        SendOrderJob::dispatch(
+            $order->deliveryInformation->email,
+            $order->deliveryInformation->first_name,
+            $order->deliveryInformation->last_name,
+            json_decode($order->items, true),
+            $order->invoice_no,
+            $order->amount,
+            $order->order_status,
+            $order->payment_method,
+            $order->payment_status
+        );
     }
 
     return response()->json(['status' => 'success']);

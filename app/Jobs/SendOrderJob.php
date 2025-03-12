@@ -16,32 +16,28 @@ class SendOrderJob implements ShouldQueue
     protected $email;
     protected $first_name;
     protected $last_name;
-    protected $product_name;
     protected $invoice_no;
     protected $amount;
-    protected $quantity;
-    protected $size;
     protected $order_status;
     protected $payment_method;
     protected $payment_status;
+    protected $items;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($email, $first_name, $last_name, $product_name, $invoice_no, $amount, $quantity, $size, $order_status, $payment_method, $payment_status)
+    public function __construct($email, $first_name, $last_name, $invoice_no, $amount, $order_status, $payment_method, $payment_status, $items)
     {
         //
         $this->email = $email;
         $this->first_name = $first_name;
         $this->last_name = $last_name;
-        $this->product_name = $product_name;
         $this->invoice_no = $invoice_no;
         $this->amount = $amount;
-        $this->quantity = $quantity;
-        $this->size = $size;
         $this->order_status = $order_status;
         $this->payment_method = $payment_method;
         $this->payment_status = $payment_status;
+        $this->items = $items;
     }
 
     /**
@@ -53,14 +49,12 @@ class SendOrderJob implements ShouldQueue
         Mail::send('emails.receptMail', [
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'product_name' => $this->product_name,
             'invoice_no' => $this->invoice_no,
             'amount' => $this->amount,
-            'quantity' => $this->quantity,
-            'size' => $this->size,
             'order_status' => $this->order_status,
             'payment_method' => $this->payment_method,
-            'payment_status' => $this->payment_status
+            'payment_status' => $this->payment_status,
+            'item' => $this->items
         ], function ($message) {
             $message->to($this->email)->subject('Your Payment Recept');
         });
