@@ -31,8 +31,8 @@ class PaystackController extends Controller
             ]);
 
             Cart::where('user_id', $order->user_id)->delete();
-            // Optionally dispatch a job to send a confirmation email
 
+            // Optionally dispatch a job to send a confirmation email
             SendOrderJob::dispatch(
                 $order->deliveryInformation->email,
                 $order->deliveryInformation->first_name,
