@@ -76,4 +76,6 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/manage-product/{id}', [ProductController::class, 'getSingleProduct']);
     Route::put('/admin/update-product/{id}', [ProductController::class, 'updateProduct']);
     Route::get('/admin/manage-product-count', [ProductController::class, 'countProduct']);
+    Route::get('/admin/order', [OrderController::class, 'getAllOrder']);
+    Route::get('/admin/order-count', [OrderController::class, 'countOrder']);
 });

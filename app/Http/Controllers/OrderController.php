@@ -6,8 +6,13 @@ use App\Jobs\SendOrderJob;
 use App\Models\Cart;
 use App\Models\DeliveryInformation;
 use App\Models\Order;
+use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
@@ -86,6 +91,7 @@ class OrderController extends Controller
                 'size' => $item->size,
                 'price' => $item->product->price,
             ])->toJson(),
+            'created_at' => Carbon::now()
         ]);
 
         // Kick off the payment flow
@@ -113,6 +119,7 @@ class OrderController extends Controller
                     $order->payment_method,
                     $order->payment_status
                 );
+                Cache::forget(('order'));
                 return response()->json(['redirect' => '/order-success']);
 
             case 'paystack':
@@ -159,6 +166,7 @@ class OrderController extends Controller
         // Store Paystack reference in order
         $order->update(['payment_reference' => $reference]);
 
+        Cache::forget(('order'));
         return response()->json([
             'payment_url' => $paymentData['data']['authorization_url']
         ]);
@@ -197,6 +205,7 @@ class OrderController extends Controller
                 $order->payment_status
             );
 
+            Cache::forget(('order'));
             return redirect('/order-success');
         }
 
@@ -248,6 +257,7 @@ class OrderController extends Controller
             ]
         ]);
 
+        Cache::forget(('order'));
         // Return the client secret so the frontend can confirm the payment
         return response()->json([
             'clientSecret' => $paymentIntent->client_secret,
@@ -264,7 +274,59 @@ class OrderController extends Controller
         if (!$deliveryInfo) {
             return;
         } else {
+            Cache::forget(('order'));
             return response()->json(['deliveryInfo' => $deliveryInfo], 200);
+        }
+    }
+
+    // get all order
+    public function getAllOrder()
+    {
+        $admin = auth('admin')->user();
+
+        // admin or subadmin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => "Unauthorized."], 403);
+        }
+
+        //  fetch all order
+        $order = Cache::remember('order', 60, function () {
+            return Order::with(['user', 'deliveryInformation'])->get();
+        });
+
+        $order->transform(function ($order) {
+            $order->items = json_decode($order->items);
+            $product_img = Product::where('id', $order->items->product_id)->get(['id', 'image1']);
+
+            // map product image
+            $order->items->image1_url = asset(Storage::url($product_img->image1));
+        });
+
+        if ($order) {
+            return response()->json(['order' => $order], 200);
+        } else {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+    }
+
+    // count number of order
+    public function countOrder()
+    {
+        $admin = auth('admin')->user();
+
+        // admin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        // fetch all order
+        $order = DB::table('orders')->count();
+
+        if ($order) {
+            Cache::forget(('order'));
+            return response()->json(['order' => $order], 200);
+        } else {
+            return response()->json(['message' => 'could not count order'], 404);
         }
     }
 }
