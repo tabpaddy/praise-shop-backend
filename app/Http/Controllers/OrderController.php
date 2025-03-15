@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -349,5 +350,45 @@ class OrderController extends Controller
         } else {
             return response()->json(['message' => 'could not count order'], 404);
         }
+    }
+
+    // get user order
+    public function getUserOrder()
+    {
+        $user = Auth::id();
+
+       
+        // Fetch all orders with relationships, cached for 60 seconds
+        $orders = Order::where('user_id', $user)->get();
+    
+
+        // Transform orders to include product images
+        $orders->transform(function ($order) {
+            // Decode items JSON into an array
+            $items = json_decode($order->items, true);
+            if (!is_array($items)) {
+                $items = []; // Handle invalid JSON gracefully
+            }
+
+            // Fetch product images for all items in one query
+            $productIds = array_column($items, 'product_id');
+            $products = Product::whereIn('id', $productIds)->pluck('image1', 'id');
+
+            // Map items with image URLs
+            $order->items = array_map(function ($item) use ($products) {
+                $item['image1_url'] = isset($products[$item['product_id']])
+                    ? asset(Storage::url($products[$item['product_id']]))
+                    : null; // Fallback if product not found
+                return $item;
+            }, $items);
+
+            return $order;
+        });
+
+        // Return orders or empty response
+        return response()->json([
+            'orders' => $orders->isEmpty() ? [] : $orders,
+            'message' => $orders->isEmpty() ? 'No orders found' : null
+        ], 200);
     }
 }
