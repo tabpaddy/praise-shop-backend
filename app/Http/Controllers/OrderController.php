@@ -37,6 +37,7 @@ class OrderController extends Controller
             'phone' => 'required|string|max:20',
             'paymentMethod' => 'required|in:cod,paystack,stripe',
             'total' => 'required|numeric|min:0',
+            'items' => 'required|json'
         ]);
 
         // Get or create delivery information
@@ -60,18 +61,23 @@ class OrderController extends Controller
 
         $deliveryInfo->save();
 
-        // Fetch cart items
-        $cartItems = Cart::where('user_id', $user->id)->with('product')->get();
-        if ($cartItems->isEmpty()) {
-            return response()->json(['error' => 'Cart is empty'], 400);
-        }
+        $items = json_decode($request->input('items'), true);
+        $frontendTotal = (float) $request->input('total');
 
-        // Validate total
-        $subtotal = $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
-        $shippingFee = $subtotal * 0.1; // Matches frontend
+        // Calculate subtotal based on sent items
+        $subtotal = collect($items)->sum(function ($item) {
+            // Optionally verify price against database to prevent tampering
+            $product = Product::find($item['product_id']);
+            $price = $product ? $product->price : (float) $item['price'];
+            return $price * $item['quantity'];
+        });
+
+        // Add any additional fees (e.g., shipping, tax)
+        $shippingFee = $subtotal * 0.1; // Adjust as needed
         $calculatedTotal = $subtotal + $shippingFee;
 
-        if (abs($calculatedTotal - $request->total) > 0.01) {
+
+        if (abs($calculatedTotal - $frontendTotal) > 0.01) {
             return response()->json(['error' => 'Total amount mismatch'], 400);
         }
 
@@ -84,7 +90,7 @@ class OrderController extends Controller
             'payment_method' => $request->paymentMethod,
             'order_status' => 'pending',
             'payment_status' => 'pending',
-            'items' => $cartItems->map(fn($item) => [
+            'items' => $items->map(fn($item) => [
                 'product_id' => $item->product_id,
                 'name' => $item->product->name,
                 'quantity' => $item->quantity,
@@ -120,7 +126,7 @@ class OrderController extends Controller
                     $order->payment_status
                 );
                 Cache::forget(('order'));
-                return response()->json(['redirect' => '/order-success']);
+                return response()->json(['redirect' => '/orders']);
 
             case 'paystack':
                 return $this->handlePaystackPayment($order);
@@ -284,29 +290,44 @@ class OrderController extends Controller
     {
         $admin = auth('admin')->user();
 
-        // admin or subadmin
+        // Check if the user is an admin or sub-admin
         if (!$admin || !$admin->isAdminOrSubAdmin()) {
-            return response()->json(['message' => "Unauthorized."], 403);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        //  fetch all order
-        $order = Cache::remember('order', 60, function () {
+        // Fetch all orders with relationships, cached for 60 seconds
+        $orders = Cache::remember('all_orders', 60, function () {
             return Order::with(['user', 'deliveryInformation'])->get();
         });
 
-        $order->transform(function ($order) {
-            $order->items = json_decode($order->items);
-            $product_img = Product::where('id', $order->items->product_id)->get(['id', 'image1']);
+        // Transform orders to include product images
+        $orders->transform(function ($order) {
+            // Decode items JSON into an array
+            $items = json_decode($order->items, true);
+            if (!is_array($items)) {
+                $items = []; // Handle invalid JSON gracefully
+            }
 
-            // map product image
-            $order->items->image1_url = asset(Storage::url($product_img->image1));
+            // Fetch product images for all items in one query
+            $productIds = array_column($items, 'product_id');
+            $products = Product::whereIn('id', $productIds)->pluck('image1', 'id');
+
+            // Map items with image URLs
+            $order->items = array_map(function ($item) use ($products) {
+                $item['image1_url'] = isset($products[$item['product_id']])
+                    ? asset(Storage::url($products[$item['product_id']]))
+                    : null; // Fallback if product not found
+                return $item;
+            }, $items);
+
+            return $order;
         });
 
-        if ($order) {
-            return response()->json(['order' => $order], 200);
-        } else {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
+        // Return orders or empty response
+        return response()->json([
+            'orders' => $orders->isEmpty() ? [] : $orders,
+            'message' => $orders->isEmpty() ? 'No orders found' : null
+        ], 200);
     }
 
     // count number of order
