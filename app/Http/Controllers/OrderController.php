@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Stripe\Stripe;
@@ -83,6 +84,7 @@ class OrderController extends Controller
         }
 
         // Create order
+        $itemsCollection = collect($items); // Convert to Collection
         $order = Order::create([
             'user_id' => $user->id,
             'delivery_information_id' => $deliveryInfo->id,
@@ -91,12 +93,12 @@ class OrderController extends Controller
             'payment_method' => $request->paymentMethod,
             'order_status' => 'pending',
             'payment_status' => 'pending',
-            'items' => $items->map(fn($item) => [
-                'product_id' => $item->product_id,
-                'name' => $item->product->name,
-                'quantity' => $item->quantity,
-                'size' => $item->size,
-                'price' => $item->product->price,
+            'items' => $itemsCollection->map(fn($item) => [
+                'product_id' => $item['product_id'],
+                'name' => Product::find($item['product_id'])->name,
+                'quantity' => $item['quantity'],
+                'size' => $item['size'],
+                'price' => $item['price'],
             ])->toJson(),
             'created_at' => Carbon::now()
         ]);
@@ -115,16 +117,17 @@ class OrderController extends Controller
                 $order->update(['payment_status' => 'pending']);
                 // Clear cart
                 Cart::where('user_id', $order->user_id)->delete();
+                Log::info('Order items before dispatch (COD):', ['items' => $order->items]);
                 SendOrderJob::dispatch(
                     $order->deliveryInformation->email,
                     $order->deliveryInformation->first_name,
                     $order->deliveryInformation->last_name,
-                    json_decode($order->items, true), // Pass items array
                     $order->invoice_no,
                     $order->amount,
                     $order->order_status,
                     $order->payment_method,
-                    $order->payment_status
+                    $order->payment_status,
+                    json_decode($order->items, true), // Pass items array
                 );
                 Cache::forget(('order'));
                 return response()->json(['redirect' => '/orders']);
@@ -204,12 +207,12 @@ class OrderController extends Controller
                 $order->deliveryInformation->email,
                 $order->deliveryInformation->first_name,
                 $order->deliveryInformation->last_name,
-                json_decode($order->items, true),
                 $order->invoice_no,
                 $order->amount,
                 $order->order_status,
                 $order->payment_method,
-                $order->payment_status
+                $order->payment_status,
+                json_decode($order->items, true), // Pass items array
             );
 
             Cache::forget(('order'));
@@ -355,39 +358,41 @@ class OrderController extends Controller
     // get user order
     public function getUserOrder()
     {
-        $user = Auth::id();
+        $user = auth()->id();
 
-       
-        // Fetch all orders with relationships, cached for 60 seconds
-        $orders = Order::where('user_id', $user)->get();
-    
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-        // Transform orders to include product images
-        $orders->transform(function ($order) {
-            // Decode items JSON into an array
-            $items = json_decode($order->items, true);
-            if (!is_array($items)) {
-                $items = []; // Handle invalid JSON gracefully
-            }
+        $orders = Cache::remember("user_orders_{$user}", 60, function () use ($user) {
+            return Order::where('user_id', $user)
+                ->paginate(10);
+        });
 
-            // Fetch product images for all items in one query
+        $orders->getCollection()->transform(function ($order) {
+            $items = json_decode($order->items, true) ?? [];
+
             $productIds = array_column($items, 'product_id');
             $products = Product::whereIn('id', $productIds)->pluck('image1', 'id');
 
-            // Map items with image URLs
             $order->items = array_map(function ($item) use ($products) {
                 $item['image1_url'] = isset($products[$item['product_id']])
                     ? asset(Storage::url($products[$item['product_id']]))
-                    : null; // Fallback if product not found
+                    : null;
                 return $item;
             }, $items);
 
             return $order;
         });
 
-        // Return orders or empty response
         return response()->json([
-            'orders' => $orders->isEmpty() ? [] : $orders,
+            'orders' => $orders->items(),
+            'pagination' => [
+                'total' => $orders->total(),
+                'per_page' => $orders->perPage(),
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+            ],
             'message' => $orders->isEmpty() ? 'No orders found' : null
         ], 200);
     }

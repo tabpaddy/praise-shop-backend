@@ -37,12 +37,12 @@ class PaystackController extends Controller
                 $order->deliveryInformation->email,
                 $order->deliveryInformation->first_name,
                 $order->deliveryInformation->last_name,
-                json_decode($order->items, true),
                 $order->invoice_no,
                 $order->amount,
                 $order->order_status,
                 $order->payment_method,
-                $order->payment_status
+                $order->payment_status,
+                json_decode($order->items, true), 
             );
         }
 
