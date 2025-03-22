@@ -196,8 +196,9 @@ class OrderController extends Controller
 
         $paymentDetails = $response->json();
 
+        $order = Order::where('payment_reference', $reference)->first();
+
         if ($paymentDetails['data']['status'] === 'success') {
-            $order = Order::where('payment_reference', $reference)->first();
             $order->update([
                 'payment_status' => 'paid',
                 'order_status' => 'processing'
@@ -217,6 +218,10 @@ class OrderController extends Controller
 
             Cache::forget(('order'));
             return redirect('/order-success');
+        } else {
+            $order->delete(); // Delete the order if payment fails
+            Cache::forget('order');
+            return redirect('/payment-failed');
         }
 
         return redirect('/payment-failed');
@@ -271,7 +276,8 @@ class OrderController extends Controller
         // Return the client secret so the frontend can confirm the payment
         return response()->json([
             'clientSecret' => $paymentIntent->client_secret,
-            'paymentMethod' => 'stripe'
+            'paymentMethod' => 'stripe',
+            'order_id' => $order->id
         ]);
     }
 
@@ -395,5 +401,20 @@ class OrderController extends Controller
             ],
             'message' => $orders->isEmpty() ? 'No orders found' : null
         ], 200);
+    }
+
+    // OrderController.php
+    public function cancelOrder(Request $request)
+    {
+        $orderId = $request->input('order_id');
+        if ($orderId && $orderId !== 'unknown') {
+            $order = Order::find($orderId);
+            if ($order && $order->payment_status === 'pending') {
+                $order->delete();
+                Log::info('Order manually deleted due to client-side payment failure: ' . $orderId);
+                return response()->json(['status' => 'order cancelled']);
+            }
+        }
+        return response()->json(['status' => 'no action taken'], 400);
     }
 }

@@ -16,22 +16,24 @@ class StripeController extends Controller
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
 
+        // Use the webhook secret from your .env
+        $webhookSecret = env('STRIPE_WEBHOOK_SECRET');
+
         try {
-            $event = Webhook::constructEvent(
-                $payload,
-                $sigHeader,
-                env('STRIPE_WEBHOOK_SECRET')
-            );
+            $event = Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
         } catch (\Exception $e) {
-            Log::error('Stripe Webhook Signature Error: ' . $e->getMessage());
+            Log::error('Webhook Signature Verification Failed: ' . $e->getMessage());
             return response()->json(['error' => 'Invalid signature'], 403);
         }
 
-        Log::info('Stripe Webhook Event Received: ' . $event->type, [
+        // Log the event for debugging
+        Log::info('Stripe Webhook Event Received:', [
+            'type' => $event->type,
             'payment_intent_id' => $event->data->object->id,
-            'status' => $event->data->object->status ?? 'N/A'
+            'status' => $event->data->object->status,
         ]);
 
+        // Process the event (your existing logic)
         $paymentIntent = $event->data->object;
         $order = Order::find($paymentIntent->metadata->order_id);
 
@@ -42,10 +44,8 @@ class StripeController extends Controller
 
         switch ($event->type) {
             case 'payment_intent.succeeded':
-                $order->update([
-                    'payment_status' => 'paid',
-                    'order_status' => 'processing'
-                ]);
+                // Handle success
+                $order->update(['payment_status' => 'paid', 'order_status' => 'processing']);
                 Cart::where('user_id', $order->user_id)->delete();
                 SendOrderJob::dispatch(
                     $order->deliveryInformation->email,
@@ -56,29 +56,26 @@ class StripeController extends Controller
                     $order->order_status,
                     $order->payment_method,
                     $order->payment_status,
-                    json_decode($order->items, true)
+                    json_decode($order->items, true), // Pass items array
                 );
                 Log::info('Order processed successfully: ' . $order->id);
                 break;
 
             case 'payment_intent.payment_failed':
             case 'charge.failed':
-                // Delete order if payment fails or charge fails
                 $order->delete();
                 Log::info('Order deleted due to payment/charge failure: ' . $order->id);
                 break;
 
-            case 'payment_intent.created':
             case 'payment_intent.updated':
-                // Check status and last_payment_error for failure
                 if ($paymentIntent->status === 'requires_payment_method' && $paymentIntent->last_payment_error) {
                     $order->delete();
-                    Log::info('Order deleted due to payment error (requires_payment_method): ' . $order->id);
+                    Log::info('Order deleted due to payment error: ' . $order->id);
                 }
                 break;
 
             default:
-                Log::info('Unhandled Stripe event type: ' . $event->type);
+                Log::info('Unhandled event type: ' . $event->type);
                 break;
         }
 

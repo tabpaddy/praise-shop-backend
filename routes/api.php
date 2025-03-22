@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payment-callback', [OrderController::class, 'handlePaymentCallback']);
     Route::get('/delivery-information', [OrderController::class, 'deliveryInformation']);
     Route::post('/user-order', [OrderController::class, 'getUserOrder']);
+    Route::post('/cancel-order', [OrderController::class, 'cancelOrder']);
 });
 
 
