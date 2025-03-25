@@ -403,7 +403,7 @@ class OrderController extends Controller
         ], 200);
     }
 
-    // OrderController.php
+    // cancel order if failure to connect with stripe pay
     public function cancelOrder(Request $request)
     {
         $orderId = $request->input('order_id');

@@ -35,9 +35,9 @@ class CartController extends Controller
 
             // $sessionId = $request->session()->getId();
             $cartId = $request->cart_id;
-            \Log::info("Cart ID: " . ($cartId ?? 'null') . ", User ID: " . ($userId ?? 'null'));
-            \Log::info("Auth check: " . (Auth::check() ? 'authenticated' : 'not authenticated'));
-            \Log::info("Request headers: " . json_encode($request->headers->all()));
+            // \Log::info("Cart ID: " . ($cartId ?? 'null') . ", User ID: " . ($userId ?? 'null'));
+            // \Log::info("Auth check: " . (Auth::check() ? 'authenticated' : 'not authenticated'));
+            // \Log::info("Request headers: " . json_encode($request->headers->all()));
 
             $existingCart = Cart::where(function ($query) use ($userId, $cartId) {
                 $query->where('user_id', $userId)->orWhere('cart_id', $cartId);
@@ -51,7 +51,7 @@ class CartController extends Controller
                     'size' => $request->size,
                     'created_at' => now(),
                 ]);
-                \Log::info('Cart item created');
+                // \Log::info('Cart item created');
             } else {
                 \Log::info('Item already in cart');
             }
@@ -68,7 +68,7 @@ class CartController extends Controller
     {
         $userId = Auth::id();
         $query = Cart::query();
-        Log::info("Fetching cart - User ID: " . ($userId ?? 'null') . ", Cart ID: " . $cartId);
+        // Log::info("Fetching cart - User ID: " . ($userId ?? 'null') . ", Cart ID: " . $cartId);
         if ($userId) {
             $query->where('user_id', $userId);
         } else {
@@ -81,7 +81,7 @@ class CartController extends Controller
             $item->image1_url = asset(Storage::url($item->product->image1));
             return $item;
         });
-        Log::info("Cart items fetched: " . $cartItems->toJson());
+        // Log::info("Cart items fetched: " . $cartItems->toJson());
         return response()->json($cartItems);
     }
 
@@ -94,7 +94,7 @@ class CartController extends Controller
             ]);
             $userId = Auth::id();
             $cartId = $request->cart_id;
-            Log::info("Counting cart - Cart ID: $cartId, User ID: " . ($userId ?? 'null'));
+            // Log::info("Counting cart - Cart ID: $cartId, User ID: " . ($userId ?? 'null'));
 
             $countCart = Cart::where(function ($query) use ($userId, $cartId) {
                 if ($userId) {
@@ -104,7 +104,7 @@ class CartController extends Controller
                 }
             })->count();
 
-            Log::info("Cart count: $countCart");
+            // Log::info("Cart count: $countCart");
             return response()->json(['count' => $countCart ?: 0]);
         } catch (\Exception $e) {
             Log::error('Count cart failed: ' . $e->getMessage() . "\nStack: " . $e->getTraceAsString());

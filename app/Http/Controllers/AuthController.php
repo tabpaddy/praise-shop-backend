@@ -35,6 +35,8 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
             'ip_address' => 'required|ip',
+        ], [
+            'ip_address.ip' => 'No network address found in the request',
         ]);
 
         $user = User::where('email', $request->email)->first();

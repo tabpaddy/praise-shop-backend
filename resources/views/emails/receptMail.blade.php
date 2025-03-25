@@ -184,7 +184,7 @@
         </div>
         <div class="content">
             <p class="greeting">Greetings {{ $first_name }} {{ $last_name }},</p>
-            <p>Thank you for choosing Praise Shop! Below is your dazzling order summary—crafted just for you.</p>
+            <p>Thank you for shopping with Praise Shop! Here’s your order summary:</p>
 
             <div class="summary">
                 <h2>Order #{{ $invoice_no }}</h2>
@@ -228,7 +228,7 @@
             <p class="contact">Your order is being prepared with care! Have questions? Reach us at <a href="mailto:taborotap@gmail.com">taborotap@gmail.com</a> or call 09066605427.</p>
         </div>
         <div class="footer">
-            <p>© {{ date('Y') }} PraiseTheDeveloper • Crafted with Passion</p>
+            <p>© {{ date('Y') }} PraiseTheDeveloper</p>
             <p><a href="{{ $url }}">Explore More</a> | <a href="mailto:taborotap@gmail.com">Get in Touch</a></p>
         </div>
     </div>
