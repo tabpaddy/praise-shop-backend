@@ -12,16 +12,16 @@ class OptionalSanctumAuth
 {
     public function handle(Request $request, Closure $next)
     {
-        Log::info('OptionalSanctumAuth middleware started');
-        Log::info('Request headers: ' . json_encode($request->headers->all()));
+        // Log::info('OptionalSanctumAuth middleware started');
+        // Log::info('Request headers: ' . json_encode($request->headers->all()));
 
         if ($token = $request->bearerToken()) {
-            Log::info('Bearer token found: ' . $token);
+            // Log::info('Bearer token found: ' . $token);
             $accessToken = PersonalAccessToken::findToken($token);
 
             if ($accessToken && $accessToken->tokenable) {
                 Auth::login($accessToken->tokenable);
-                Log::info('User authenticated: ' . Auth::id());
+                // Log::info('User authenticated: ' . Auth::id());
             } else {
                 Log::info('Invalid or expired token');
             }
@@ -29,7 +29,7 @@ class OptionalSanctumAuth
             Log::info('No Bearer token present');
         }
 
-        Log::info('OptionalSanctumAuth middleware completed');
+        // Log::info('OptionalSanctumAuth middleware completed');
         return $next($request);
     }
 }

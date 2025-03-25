@@ -52,6 +52,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cancel-order', [OrderController::class, 'cancelOrder']);
 });
 
+// Route::get('/test-env', function () {
+//     // if (file_exists(base_path('.env'))) {
+//     //     $dotenv = \Dotenv\Dotenv::createImmutable(base_path());
+//     //     $dotenv->load();
+//     //     \Log::info('.env file manually loaded in test route');
+//     // } else {
+//     //     \Log::error('.env file not found in test route');
+//     // }
+//     return response()->json([
+//         'stripe_key' => env('STRIPE_KEY'),
+//         'stripe_secret' => env('STRIPE_SECRET'),
+//         'stripe_webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+//         'frontend_url' => env('FRONTEND_URL'), // If you have this in .env
+//     ]);
+// });
+
 
 
 Route::post('/admin/login', [AuthAdminController::class, 'login']);
