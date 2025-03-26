@@ -24,8 +24,9 @@ class SendOrderJob implements ShouldQueue
     public $payment_method;
     public $payment_status;
     public $items;
+    public $payment_reference;
 
-    public function __construct($email, $first_name, $last_name, $invoice_no, $amount, $order_status, $payment_method, $payment_status, $items)
+    public function __construct($email, $first_name, $last_name, $invoice_no, $amount, $order_status, $payment_method, $payment_status, $items, $payment_reference)
     {
         $this->email = $email;
         $this->first_name = $first_name;
@@ -36,10 +37,12 @@ class SendOrderJob implements ShouldQueue
         $this->payment_method = $payment_method;
         $this->payment_status = $payment_status;
         $this->items = $items;
+        $this->payment_reference = $payment_reference;
 
         Log::info('SendOrderJob constructed:', [
             'email' => $this->email,
-            'items' => $this->items
+            'items' => $this->items,
+            'payment_reference' => $this->payment_reference
         ]);
     }
 
@@ -55,6 +58,7 @@ class SendOrderJob implements ShouldQueue
             'payment_method' => $this->payment_method,
             'payment_status' => $this->payment_status,
             'items' => $this->items,
+            'payment_reference' => $this->payment_reference,
             'url' => env('FRONTEND_URL')
         ];
 
@@ -70,6 +74,7 @@ class SendOrderJob implements ShouldQueue
             $this->payment_method,
             $this->payment_status,
             $this->items,
+            $this->payment_reference,
             env('FRONTEND_URL')
         );
 

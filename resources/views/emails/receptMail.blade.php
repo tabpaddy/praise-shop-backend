@@ -191,6 +191,9 @@
                 <p><span class="label">Order Status:</span> {{ ucfirst($order_status) }}</p>
                 <p><span class="label">Payment Method:</span> {{ ucfirst($payment_method) }}</p>
                 <p><span class="label">Payment Status:</span> {{ ucfirst($payment_status) }}</p>
+                @if ($payment_method === 'paystack' && $payment_reference)
+                    <p><span class="label">Payment Reference:</span> {{ $payment_reference }}</p>
+                @endif
 
                 @if (isset($items) && !empty($items))
                     <div class="table-wrapper">
