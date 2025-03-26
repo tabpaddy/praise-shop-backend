@@ -114,23 +114,41 @@ class OrderController extends Controller
     {
         switch ($method) {
             case 'cod':
-                $order->update(['payment_status' => 'pending']);
-                // Clear cart
-                Cart::where('user_id', $order->user_id)->delete();
-                Log::info('Order items before dispatch (COD):', ['items' => $order->items]);
-                SendOrderJob::dispatch(
-                    $order->deliveryInformation->email,
-                    $order->deliveryInformation->first_name,
-                    $order->deliveryInformation->last_name,
-                    $order->invoice_no,
-                    $order->amount,
-                    $order->order_status,
-                    $order->payment_method,
-                    $order->payment_status,
-                    json_decode($order->items, true), // Pass items array
-                );
-                Cache::forget(('order'));
-                return response()->json(['redirect' => '/orders']);
+                try {
+                    DB::transaction(function () use ($order) { //transaction to rollback if any error occurs
+                        $order->update(['payment_status' => 'pending', 'order_status' => 'processing',]);
+                        Cart::where('user_id', $order->user_id)->delete(); // clear cart
+                        Log::info('Order items before dispatch (COD):', ['items' => $order->items]);
+                        SendOrderJob::dispatch(
+                            $order->deliveryInformation->email,
+                            $order->deliveryInformation->first_name,
+                            $order->deliveryInformation->last_name,
+                            $order->invoice_no,
+                            $order->amount,
+                            $order->order_status,
+                            $order->payment_method,
+                            $order->payment_status,
+                            json_decode($order->items, true),
+                            null
+                        ); // send mail job
+                        Cache::forget('order');
+                    });
+                    return response()->json(['redirect' => '/orders']);
+                } catch (\Exception $e) {
+                    Log::error('COD Payment Processing Failed', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    if ($order->exists) {
+                        $order->delete();
+                        Log::info('Order deleted due to COD processing failure', ['order_id' => $order->id]);
+                    }
+                    return response()->json([
+                        'error' => 'Failed to process COD order',
+                        'details' => $e->getMessage(),
+                    ], 500);
+                }
 
             case 'paystack':
                 return $this->handlePaystackPayment($order);
@@ -153,13 +171,13 @@ class OrderController extends Controller
     {
         $reference = Str::uuid();
 
-        Log::info('Paystack Payment Initialization Attempt', [
-            'order_id' => $order->id,
-            'amount' => $order->amount * 100,
-            'email' => $order->deliveryInformation->email,
-            'reference' => $reference,
-            'callback_url' => route('payment.callback'),
-        ]);
+        // Log::info('Paystack Payment Initialization Attempt', [
+        //     'order_id' => $order->id,
+        //     'amount' => $order->amount * 100,
+        //     'email' => $order->deliveryInformation->email,
+        //     'reference' => $reference,
+        //     'callback_url' => route('payment.callback'),
+        // ]);
 
         $response = Http::withToken(env('PAYSTACK_SECRET_KEY'))
             ->post('https://api.paystack.co/transaction/initialize', [
@@ -176,14 +194,14 @@ class OrderController extends Controller
 
         $paymentData = $response->json();
 
-        Log::info('Paystack Response', ['response' => $paymentData]);
+        // Log::info('Paystack Response', ['response' => $paymentData]);
         // Log the full Paystack response
-        Log::info('Paystack Response', [
-            'status' => $paymentData['status'] ?? 'not set',
-            'message' => $paymentData['message'] ?? 'no message',
-            'data' => $paymentData['data'] ?? 'no data',
-            'full_response' => $paymentData,
-        ]);
+        // Log::info('Paystack Response', [
+        //     'status' => $paymentData['status'] ?? 'not set',
+        //     'message' => $paymentData['message'] ?? 'no message',
+        //     'data' => $paymentData['data'] ?? 'no data',
+        //     'full_response' => $paymentData,
+        // ]);
 
         if (!$paymentData || !isset($paymentData['status']) || !$paymentData['status']) {
             $order->delete();
@@ -224,39 +242,12 @@ class OrderController extends Controller
 
         if ($paymentDetails['status'] && $paymentDetails['data']['status'] === 'success') {
             // Webhook will handle the rest, just redirect
-            return redirect(env('FRONTEND_URL') . '/orders');
+            return redirect(env('FRONTEND_URL') . '/orders?payment=success');
         } else {
             // Webhook will delete the order, redirect to failure page
             return redirect(env('FRONTEND_URL') . '/padp?error=' . urlencode('Payment failed'));
         }
     }
-
-    // public function handlePaymentCallback(Request $request)
-    // {
-    //     $paymentDetails = Paystack::getPaymentData();
-
-    //     // For demonstration:
-    //     // $paymentDetails = [
-    //     //     'data' => [
-    //     //         'status'   => 'success',
-    //     //         'metadata' => ['order_id' => 1]
-    //     //     ]
-    //     // ];
-
-    //     if ($paymentDetails['data']['status'] === 'success') {
-    //         $order = Order::find($paymentDetails['data']['metadata']['order_id']);
-    //         $order->update([
-    //             'payment_status' => 'paid',
-    //             'order_status' => 'processing'
-    //         ]);
-
-    //         SendOrderJob::dispatch($order->deliveryInformation->email, $order->deliveryInformation->first_name, $order->deliveryInformation->last_name, $order->product->name, $order->invoice_no, $order->amount, $order->quantity, $order->size, $order->order_status, $order->payment_method, $order->payment_status);
-
-    //         return redirect('/order-success');
-    //     }
-
-    //     return redirect('/payment-failed');
-    // }
 
     /**
      * Stripe Payment Logic
@@ -366,44 +357,47 @@ class OrderController extends Controller
     }
 
     // get user order
-    public function getUserOrder()
+    public function getUserOrder(Request $request)
     {
-        $user = auth()->id();
+        $userId = Auth::id();
 
-        if (!$user) {
+        if (!$userId) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $orders = Cache::remember("user_orders_{$user}", 60, function () use ($user) {
-            return Order::where('user_id', $user)
+        $orders = Cache::remember("user_orders_{$userId}", 60, function () use ($userId) {
+            return Order::where('user_id', $userId)->latest()
+                ->with('deliveryInformation')
                 ->paginate(10);
         });
 
         $orders->getCollection()->transform(function ($order) {
             $items = json_decode($order->items, true) ?? [];
 
-            $productIds = array_column($items, 'product_id');
-            $products = Product::whereIn('id', $productIds)->pluck('image1', 'id');
+            if (!empty($items)) {
+                $productIds = array_column($items, 'product_id');
+                $products = Product::whereIn('id', $productIds)->pluck('image1', 'id');
 
-            $order->items = array_map(function ($item) use ($products) {
-                $item['image1_url'] = isset($products[$item['product_id']])
-                    ? asset(Storage::url($products[$item['product_id']]))
-                    : null;
-                return $item;
-            }, $items);
+                $order->items = array_map(function ($item) use ($products) {
+                    $item['image1_url'] = isset($products[$item['product_id']])
+                        ? asset(Storage::url($products[$item['product_id']]))
+                        : null; // Fallback image
+                    return $item;
+                }, $items);
+            }
 
             return $order;
         });
 
         return response()->json([
-            'orders' => $orders->items(),
+            'orders' => $orders->items(), // Array of orders
             'pagination' => [
                 'total' => $orders->total(),
                 'per_page' => $orders->perPage(),
                 'current_page' => $orders->currentPage(),
                 'last_page' => $orders->lastPage(),
             ],
-            'message' => $orders->isEmpty() ? 'No orders found' : null
+            'message' => $orders->isEmpty() ? 'No orders found' : null,
         ], 200);
     }
 

@@ -26,7 +26,7 @@ class SendOrderJob implements ShouldQueue
     public $items;
     public $payment_reference;
 
-    public function __construct($email, $first_name, $last_name, $invoice_no, $amount, $order_status, $payment_method, $payment_status, $items, $payment_reference)
+    public function __construct($email, $first_name, $last_name, $invoice_no, $amount, $order_status, $payment_method, $payment_status, $items, $payment_reference = null)
     {
         $this->email = $email;
         $this->first_name = $first_name;
