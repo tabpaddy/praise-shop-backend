@@ -409,9 +409,63 @@ class OrderController extends Controller
             $order = Order::find($orderId);
             if ($order && $order->payment_status === 'pending') {
                 $order->delete();
-                Log::info('Order manually deleted due to client-side payment failure: ' . $orderId);
+                // Log::info('Order manually deleted due to client-side payment failure: ' . $orderId);
                 return response()->json(['status' => 'order cancelled']);
             }
+        }
+        return response()->json(['status' => 'no action taken'], 400);
+    }
+
+    // orderstatus
+    public function status(Request $request)
+    {
+        $admin = auth('admin')->user();
+
+        // admin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $request->validate([
+            'order_status' => 'required|string',
+            'invoice_no' => 'required|string'
+        ]);
+
+        $orderStatus = $request->order_status;
+        $invoice_no = $request->invoice_no;
+
+        $order = Order::find($invoice_no);
+        if ($order && $order->order_status === 'processing') {
+            $order->update(['order_status' => $orderStatus]);
+            Log::info('Order status updated to : ' . $orderStatus);
+            return response()->json(['message' => 'successful']);
+        }
+        return response()->json(['status' => 'no action taken'], 400);
+    }
+
+    // order payment status
+    public function payment_status(Request $request)
+    {
+        $admin = auth('admin')->user();
+
+        // admin
+        if (!$admin || !$admin->isAdminOrSubAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $request->validate([
+            'payment_status' => 'required|string',
+            'invoice_no' => 'required|string'
+        ]);
+
+        $paymentStatus = $request->payment_status;
+        $invoice_no = $request->invoice_no;
+
+        $order = Order::find($invoice_no);
+        if ($order && $order->payment_status === 'pending') {
+            $order->update(['order_status' => $paymentStatus]);
+            Log::info('Order payment status updated to : ' . $paymentStatus);
+            return response()->json(['message' => 'successful']);
         }
         return response()->json(['status' => 'no action taken'], 400);
     }

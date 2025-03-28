@@ -59,7 +59,7 @@ class AuthController extends Controller
             'token' => $token,
             'user' => $user,
             'userId' => Auth::id(),
-            'expiresIn' => 60 * 60, // 60 minutes in seconds
+            'expiresIn' => 60 * 120, // 120 minutes in seconds
         ]);
     }
 
