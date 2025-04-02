@@ -59,7 +59,7 @@ class SendOrderJob implements ShouldQueue
             'payment_status' => $this->payment_status,
             'items' => $this->items,
             'payment_reference' => $this->payment_reference,
-            'url' => env('FRONTEND_URL')
+            'url' => config('app.frontend_url', 'http://localhost:5173')
         ];
 
         Log::info('SendOrderJob properties:', $data);
@@ -75,7 +75,7 @@ class SendOrderJob implements ShouldQueue
             $this->payment_status,
             $this->items,
             $this->payment_reference,
-            env('FRONTEND_URL')
+            config('app.frontend_url', 'http://localhost:5173')
         );
 
         // Set the recipient email dynamically

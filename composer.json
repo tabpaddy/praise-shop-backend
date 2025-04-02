@@ -10,6 +10,7 @@
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "phpmailer/phpmailer": "^6.9",
         "stripe/stripe-php": "^16.6",
         "tijsverkoyen/css-to-inline-styles": "^2.3",
         "unicodeveloper/laravel-paystack": "^1.2"

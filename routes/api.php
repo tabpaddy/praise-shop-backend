@@ -16,6 +16,7 @@ use App\Http\Controllers\PaystackController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StripeController;
 
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -67,6 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
 //         'frontend_url' => env('FRONTEND_URL'), // If you have this in .env
 //     ]);
 // });
+
 
 
 

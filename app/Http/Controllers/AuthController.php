@@ -58,7 +58,6 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token' => $token,
             'user' => $user,
-            'userId' => Auth::id(),
             'expiresIn' => 60 * 120, // 120 minutes in seconds
         ]);
     }
