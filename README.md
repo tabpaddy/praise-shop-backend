@@ -1,190 +1,211 @@
-# Shop with Praise - E-commerce Backend
+# Shop with Praise - E-commerce Backend (Laravel)
 
-This is the **Laravel** backend for the *Shop with Praise* ecommerce platform, powering authentication, product management, cart operations, orders, payments, and email notifications. Built as a portfolio project, it provides a RESTful API for the React frontend (see [praise-shop frontend](https://github.com/tabpaddy/praise-shop)).
+This is the **Laravel** backend API for the *Shop with Praise* e-commerce platform. It handles essential functionalities such as user authentication, product management, shopping cart operations, order processing, payments, and email notifications. Designed as a portfolio project, it provides a RESTful API to support the React frontend (available at [praise-shop frontend](https://github.com/tabpaddy/praise-shop)).
 
-## Features
-- **Authentication**: Secure user and admin login/logout with Laravel Sanctum.
-- **Product Management**: Full CRUD operations for products (admin-only for create/update/delete).
-- **Shopping Cart**: API for adding, viewing, and removing cart items.
-- **Order Processing**: Place orders with payment options and email receipts.
-- **Payment Integration**: Stripe (card payments), Paystack (regional payments), and Cash on Delivery (COD).
-- **Email Notifications**: Order receipts and password reset links sent via Gmail SMTP.
-- **Role-Based Authorization**: Super admin (full control) and sub-admins (limited actions) via admin role.
+## Key Features
 
-## Technologies Used
-- **Framework**: Laravel 11 (PHP 8.2+)
-- **Database**: MySQL (Schema storage)
-- **Authentication**: Laravel Sanctum (Token-based API auth)
-- **Payment Gateways**: 
-  - Stripe API (Card payments)
-  - Paystack API (Regional payments)
-- **Email**: Gmail SMTP (Order receipts, password resets)
-- **CORS**: Cross-Origin Resource Sharing for frontend connectivity
-- **Testing**: Laravel Tinker (CLI testing)
-- **Dependencies**: Composer-managed (e.g., `stripe/stripe-php`)
+* **Authentication:** Secure user and admin authentication (login/logout) powered by Laravel Sanctum.
+* **Product Management:** Comprehensive CRUD (Create, Read, Update, Delete) operations for products. Product creation, updates, and deletion are restricted to administrators.
+* **Shopping Cart:** API endpoints for managing user shopping carts, including adding, viewing, and removing items.
+* **Order Processing:** Functionality to place orders, process payments, and generate order receipts.
+* **Payment Integration:** Support for multiple payment gateways:
+    * Stripe API for credit card payments.
+    * Paystack API for regional (specific country) payments.
+    * Cash on Delivery (COD) option.
+* **Email Notifications:** Automated email communication for order confirmations and password reset instructions, sent via Gmail SMTP.
+* **Role-Based Authorization:** Implementation of user roles (Super Admin and Sub-Admin) to control access to specific functionalities, managed through middleware.
 
-## Installation & Setup
+## Technologies
+
+* **Framework:** Laravel 11 (requires PHP 8.2+)
+* **Database:** MySQL (for structured data storage)
+* **API Authentication:** Laravel Sanctum (for token-based API authentication)
+* **Payment Gateways:**
+    * Stripe API (using the `stripe/stripe-php` Composer package)
+    * Paystack API
+* **Email Service:** Gmail SMTP
+* **CORS:** Cross-Origin Resource Sharing (configured for frontend connectivity)
+* **Testing:** Laravel Tinker (for interactive command-line testing)
+* **Dependency Management:** Composer
+
+## Getting Started
 
 ### Prerequisites
-- **PHP 8.2+**, **Composer**, and **MySQL** installed.
-- Node.js and npm (for frontend integration—see [frontend README](https://github.com/tabpaddy/praise-shop/README.md)).
 
-### Steps to Run Locally
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/tabpaddy/praise-shop-backend.git
-   cd praise-shop-backend
+* PHP 8.2+
+* Composer (for PHP dependency management)
+* MySQL (database server)
+* Node.js and npm (only required if you're also setting up the React frontend - see the [frontend README](https://github.com/tabpaddy/praise-shop/README.md))
 
-Install Dependencies:
-bash
+### Local Installation
 
-composer install
+1.  **Clone the Repository:**
 
-Configure Environment:
-Copy .env.example to .env:
-bash
+    ```bash
+    git clone [https://github.com/tabpaddy/praise-shop-backend.git](https://github.com/tabpaddy/praise-shop-backend.git)
+    cd praise-shop-backend
+    ```
 
-cp .env.example .env
+2.  **Install Dependencies:**
 
-Edit .env with your settings:
+    ```bash
+    composer install
+    ```
 
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=ecommerce
-DB_USERNAME=root
-DB_PASSWORD=
+3.  **Configure Environment:**
 
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS="noreply@shopwithpraise.com"
-MAIL_FROM_NAME="Shop with Praise"
+    * Copy the example environment file:
 
-STRIPE_KEY=your-stripe-public-key
-STRIPE_SECRET=your-stripe-secret-key
-PAYSTACK_PUBLIC_KEY=your-paystack-public-key
-PAYSTACK_SECRET_KEY=your-paystack-secret-key
-PAYSTACK_PAYMENT_URL=https://api.paystack.co
+        ```bash
+        cp .env.example .env
+        ```
 
-Generate app key:
-bash
+    * Edit the `.env` file to provide your specific configuration:
 
-php artisan key:generate
+        ```dotenv
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=ecommerce
+        DB_USERNAME=root
+        DB_PASSWORD=
 
-Run Migrations:
-bash
+        MAIL_MAILER=smtp
+        MAIL_HOST=smtp.gmail.com
+        MAIL_PORT=587
+        MAIL_USERNAME=your-email@gmail.com
+        MAIL_PASSWORD=your-app-password # Use a Gmail App Password!
+        MAIL_ENCRYPTION=tls
+        MAIL_FROM_ADDRESS="noreply@shopwithpraise.com"
+        MAIL_FROM_NAME="Shop with Praise"
 
-php artisan migrate
+        STRIPE_KEY=your-stripe-public-key
+        STRIPE_SECRET=your-stripe-secret-key
+        PAYSTACK_PUBLIC_KEY=your-paystack-public-key
+        PAYSTACK_SECRET_KEY=your-paystack-secret-key
+        PAYSTACK_PAYMENT_URL=[https://api.paystack.co](https://api.paystack.co)
+        ```
 
-Start the Server:
-bash
+4.  **Generate Application Key:**
 
-php artisan serve
+    ```bash
+    php artisan key:generate
+    ```
 
-Runs at http://localhost:8000.
+5.  **Run Database Migrations:**
 
-Test with Tinker (Optional):
-bash
+    ```bash
+    php artisan migrate
+    ```
 
-php artisan tinker
->>> User::create(['name' => 'Test', 'email' => 'test@example.com', 'password' => bcrypt('password')]);
+6.  **Start the Development Server:**
 
-API Endpoints
-All routes are prefixed with /api and protected by Sanctum where noted.
-Authentication
-POST /api/register - Register a user (returns token).
+    ```bash
+    php artisan serve
+    ```
 
-POST /api/login - Login user (returns token).
+    The server will be accessible at `http://localhost:8000`.
 
-POST /api/logout - Logout user (Sanctum auth required).
+7.  **Test with Tinker (Optional):**
 
-POST /api/forget-password - Send password reset email.
+    ```bash
+    php artisan tinker
+    >>> User::create(['name' => 'Test User', 'email' => 'test@example.com', 'password' => bcrypt('password')]);
+    ```
 
-POST /api/reset-password - Reset password with token.
+## API Endpoints
 
-Products
-GET /api/products - List all products.
+* All routes are prefixed with `/api/` and are protected by Laravel Sanctum authentication where indicated.
 
-GET /api/products/{id} - Get product details.
+### Authentication
 
-POST /api/admin/products - Create product (Admin only, Sanctum auth).
+* `POST /api/register` - Register a new user (returns authentication token).
+* `POST /api/login` - Authenticate a user and receive an authentication token.
+* `POST /api/logout` - Invalidate the current user's authentication token (requires Sanctum authentication).
+* `POST /api/forgot-password` - Initiate the password reset process by sending a reset link to the user's email.
+* `POST /api/reset-password` - Reset the user's password using a valid reset token.
 
-PUT /api/admin/manage-products/{id} - Update product (Admin only, Sanctum auth).
+### Products
 
-DELETE /api/admin/manage-products/{id} - Delete product (Admin only, Sanctum auth).
+* `GET /api/products` - Retrieve a list of all products.
+* `GET /api/products/{id}` - Retrieve details for a specific product.
+* `POST /api/admin/products` - Create a new product (Admin authorization required).
+* `PUT /api/admin/manage-products/{id}` - Update an existing product (Admin authorization required).
+* `DELETE /api/admin/manage-products/{id}` - Delete a product (Admin authorization required).
 
-Cart
-POST /api/add-to-cart - Add item to cart (optional Sanctum auth middleware to accept cartId).
+### Cart
 
-GET /api/cart/{cart_id} - View cart items (optional Sanctum auth middleware to accept cartId).
+* `POST /api/add-to-cart` - Add an item to the shopping cart (supports optional Sanctum authentication for user-specific carts).
+* `GET /api/cart/{cart_id}` - Retrieve the items in a shopping cart (supports optional Sanctum authentication).
+* `PUT /api/cart/{id}` - Update the quantity of an item in the cart (supports optional Sanctum authentication).
+* `DELETE /api/remove-item/{id}` - Remove an item from the cart (supports optional Sanctum authentication).
 
-PUT /api/cart/{id} - Update cart item quantity (optional Sanctum auth middleware to accept cartId).
+### Orders
 
-DELETE /api/remove-item/{id} - Remove item from cart (optional Sanctum auth middleware to accept cartId).
+* `POST /api/orders` - Place a new order (requires Sanctum authentication; supports Stripe, Paystack, and COD payments).
+* `GET /api/orders` - Retrieve the order history for the authenticated user (requires Sanctum authentication).
+* `PUT /api/orders/{id}` - Update the status of an order (Admin authorization required).
 
-Orders
-POST /api/orders - Place an order (Sanctum auth; supports Stripe, Paystack, COD).
+### Admin Management
 
-GET /api/orders - View order history (Sanctum auth).
+* `POST /api/admin/create-subadmin` - Create a new sub-administrator account (Super Admin authorization required).
+* `GET /api/admin/sub-admin` - Retrieve a list of all administrator accounts (Super Admin authorization required).
+* `DELETE /api/admin/sub-admin/{id}` - Delete an administrator account (Super Admin authorization required).
 
-PUT /api/orders/{id} - Update order status (Admin only, Sanctum auth).
+### Role-Based Authorization
 
-Admin Management
-POST /api/admin/create-subadmin - Create sub-admin (Super Admin only, Sanctum auth).
+* **Super Admin:** Has full access to all API endpoints and administrative functions.
+* **Sub Admin:** Has restricted access, typically limited to product and user management, but not administrator management.
+* Authorization is enforced using middleware located in `app/Http/Middleware/` (e.g., `EnsureIsAdmin`).
 
-GET /api/admin/sub-admin - List admins (Super Admin only, Sanctum auth).
+### Configuration Notes
 
-DELETE /api/admin/sub-admin/{id} - Delete sub-admin (Super Admin only, Sanctum auth).
+* **CORS Configuration:** Cross-Origin Resource Sharing is configured in `config/cors.php` to allow requests from `https://shopwithpraise.vercel.app` and `http://localhost:5173`.
+* **Email Sending:** Order confirmation emails (`SendOrderJob`) and password reset emails (`SendResetPasswordMail`) are sent using Gmail SMTP. The queue driver is set to `sync` for immediate processing (`QUEUE_CONNECTION=sync`).
+* **Payment Gateway Integration:** Stripe and Paystack are integrated using their respective PHP SDKs.
 
-Role-Based Authorization
-Super Admin: Full access to all endpoints (seeded manually or via Tinker).
+### Deployment
 
-Sub Admins: Restricted to product/user CRUD, no admin management.
+For production environments:
 
-Middleware checks roles in app/Http/Middleware/ (e.g., EnsureIsAdmin).
+1.  Update the `.env` file with your live database credentials, SMTP settings, and payment gateway API keys.
+2.  Optimize Laravel configuration:
 
-Configuration Details
-CORS: Set in config/cors.php to allow https://shopwithpraise.vercel.app.
+    ```bash
+    php artisan config:cache
+    php artisan route:cache
+    php artisan view:cache
+    ```
 
-Emails: Gmail SMTP sends order receipts (SendOrderJob) and password reset links (SendResetPasswordMail) synchronously (QUEUE_CONNECTION=sync).
+3.  Run database migrations (with caution in production):
 
-Payments: Stripe and Paystack integrated via their PHP SDKs.
+    ```bash
+    php artisan migrate --force
+    ```
 
-Deployment
-For production:
-Update .env with live credentials (DB, SMTP, payment keys).
+4.  Configure a web server (e.g., Apache or Nginx) to serve the Laravel application.
 
-Cache configs:
-bash
+### Deployment Limitations
 
-php artisan config:cache
-php artisan migrate --force
+This project was built primarily for portfolio demonstration purposes with a limited budget. As such, it is designed to be run locally and paired with the frontend hosted at `https://shopwithpraise.vercel.app`.
 
-Serve with Apache/Nginx (e.g., on a VPS).
+### Lessons Learned
 
-Why No Live Hosting?
-Built for resume purposes with a $0 budget. Runs locally; pair with the frontend at https://shopwithpraise.vercel.app.
-Lessons Learned
-Developed a RESTful API with Laravel Sanctum for secure authentication.
+* Developed a robust RESTful API using Laravel Sanctum for secure authentication.
+* Implemented a role-based authorization system to manage user permissions.
+* Integrated Gmail SMTP for reliable email delivery.
+* Worked with multiple payment gateways (Stripe and Paystack) within a Laravel application.
+* Utilized Laravel Tinker for efficient testing and debugging.
 
-Implemented role-based authorization for admin workflows.
+### Contributing
 
-Integrated Gmail SMTP for synchronous email delivery.
+Contributions are welcome! Please fork the repository and submit pull requests for any enhancements or bug fixes.
 
-Handled multiple payment gateways (Stripe, Paystack) with Laravel.
+### License
 
-Used Tinker for rapid testing and debugging.
+This project is licensed under the MIT License (see `LICENSE`).
 
-Contributing
-Fork and submit pull requests—open to enhancements!
-License
-MIT License (LICENSE)
-Contact
-GitHub: tabpaddy
+### Contact
 
-Email: taborotap@gmail.com (mailto:taborotap@gmail.com)
-
+* GitHub: [tabpaddy](https://github.com/tabpaddy)
+* Email: [taborotap@gmail.com](mailto:taborotap@gmail.com)
