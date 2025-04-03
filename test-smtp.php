@@ -10,7 +10,7 @@ try {
     $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'milagrosluingtnp89@gmail.com';
-    $mail->Password = 'vuoocdcxnsravcmj';
+    $mail->Password = '****************'; // Use an App Password if 2FA is enabled
     $mail->SMTPSecure = 'tls';
     $mail->Port = 587;
 
